@@ -17,7 +17,7 @@ public static class UserEndpoints
         .WithName("GetAllUsers")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<User>, NotFound>> (string id, MainDatabaseContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<User>, NotFound>> (int id, MainDatabaseContext db) =>
         {
             return await db.User.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.Id == id)
@@ -28,7 +28,7 @@ public static class UserEndpoints
         .WithName("GetUserById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (string id, User user, MainDatabaseContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, User user, MainDatabaseContext db) =>
         {
             var affected = await db.User
                 .Where(model => model.Id == id)
@@ -41,6 +41,7 @@ public static class UserEndpoints
                   .SetProperty(m => m.Email, user.Email)
                   .SetProperty(m => m.UserImage, user.UserImage)
                   .SetProperty(m => m.UserImageType, user.UserImageType)
+                  .SetProperty(m => m.CreatedDate, user.CreatedDate)
                 );
 
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
@@ -57,7 +58,7 @@ public static class UserEndpoints
         .WithName("CreateUser")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (string id, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int id, MainDatabaseContext db) =>
         {
             var affected = await db.User
                 .Where(model => model.Id == id)

@@ -15,17 +15,11 @@ public partial class Reservation
     [StringLength(10)]
     public string ReservationId { get; set; }
 
-    [Required]
     [Column("customer_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string CustomerId { get; set; }
+    public int CustomerId { get; set; }
 
-    [Required]
     [Column("staffID")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string StaffId { get; set; }
+    public int StaffId { get; set; }
 
     [Column("tableNo")]
     public int TableNo { get; set; }

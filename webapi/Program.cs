@@ -30,8 +30,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapAccountEndpoints();
-
 app.MapUserEndpoints();
+
+app.MapAuthenticationEndpoints();
 
 app.Run();

@@ -13,9 +13,7 @@ public partial class Role
 {
     [Key]
     [Column("role_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string RoleId { get; set; }
+    public int RoleId { get; set; }
 
     [Required]
     [Column("role_name")]
@@ -24,5 +22,5 @@ public partial class Role
     public string RoleName { get; set; }
 
     [InverseProperty("RoleNavigation")]
-    public virtual ICollection<Account> Account { get; set; } = new List<Account>();
+    public virtual ICollection<Authentication> Authentication { get; set; } = new List<Authentication>();
 }

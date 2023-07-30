@@ -8,14 +8,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Account", Schema = "userMGT")]
-public partial class Account
+[Keyless]
+public partial class UserAccounts
 {
-    [Key]
-    [Column("user_id")]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Required]
+    [Column("username")]
     [StringLength(10)]
     [Unicode(false)]
-    public string UserId { get; set; }
+    public string Username { get; set; }
+
+    [Required]
+    [Column("email")]
+    [StringLength(50)]
+    [Unicode(false)]
+    public string Email { get; set; }
 
     [Required]
     [Column("password")]
@@ -23,21 +32,14 @@ public partial class Account
     public string Password { get; set; }
 
     [Column("role")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string Role { get; set; }
+    public int? Role { get; set; }
 
     [Column("created_date", TypeName = "datetime")]
     public DateTime CreatedDate { get; set; }
 
+    [Column("last_logged", TypeName = "datetime")]
+    public DateTime LastLogged { get; set; }
+
     [Column("last_updated")]
     public byte[] LastUpdated { get; set; }
-
-    [ForeignKey("Role")]
-    [InverseProperty("Account")]
-    public virtual Role RoleNavigation { get; set; }
-
-    [ForeignKey("UserId")]
-    [InverseProperty("Account")]
-    public virtual User User { get; set; }
 }

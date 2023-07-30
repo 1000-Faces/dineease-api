@@ -9,13 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("User", Schema = "userMGT")]
+[Index("Email", Name = "IX_User", IsUnique = true)]
 public partial class User
 {
     [Key]
     [Column("id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [Column("username")]
@@ -23,6 +22,7 @@ public partial class User
     [Unicode(false)]
     public string Username { get; set; }
 
+    [Required]
     [Column("name")]
     [StringLength(20)]
     public string Name { get; set; }
@@ -35,6 +35,7 @@ public partial class User
     [Unicode(false)]
     public string Phone { get; set; }
 
+    [Required]
     [Column("email")]
     [StringLength(50)]
     [Unicode(false)]
@@ -48,8 +49,11 @@ public partial class User
     [Unicode(false)]
     public string UserImageType { get; set; }
 
+    [Column("created_date", TypeName = "datetime")]
+    public DateTime CreatedDate { get; set; }
+
     [InverseProperty("User")]
-    public virtual Account Account { get; set; }
+    public virtual Authentication Authentication { get; set; }
 
     [InverseProperty("User")]
     public virtual Customer Customer { get; set; }

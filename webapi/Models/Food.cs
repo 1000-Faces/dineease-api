@@ -12,8 +12,7 @@ public partial class Food
 {
     [Key]
     [Column("food_id")]
-    [StringLength(10)]
-    public string FoodId { get; set; }
+    public int FoodId { get; set; }
 
     [Required]
     [Column("food_name")]
