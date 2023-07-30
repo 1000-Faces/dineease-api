@@ -13,9 +13,7 @@ public partial class Staff
 {
     [Key]
     [Column("user_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string UserId { get; set; }
+    public int UserId { get; set; }
 
     [Column("job_title")]
     [StringLength(50)]

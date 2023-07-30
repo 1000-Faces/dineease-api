@@ -4,7 +4,7 @@
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
-   "IncludeConnectionString": true,
+   "IncludeConnectionString": false,
    "ModelNamespace": null,
    "OutputContextPath": null,
    "OutputPath": "Models",
@@ -88,7 +88,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[userMGT].[Account]",
+         "Name": "[userMGT].[Authentication]",
          "ObjectType": 0
       },
       {

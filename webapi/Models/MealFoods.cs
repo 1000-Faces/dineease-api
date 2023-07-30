@@ -16,10 +16,8 @@ public partial class MealFoods
     [StringLength(10)]
     public string MealId { get; set; }
 
-    [Required]
     [Column("food_id")]
-    [StringLength(10)]
-    public string FoodId { get; set; }
+    public int FoodId { get; set; }
 
     [Column("quantity1")]
     public int Quantity1 { get; set; }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using webapi.Models;
 using webapi;
 using webapi.Endpoints;
@@ -30,6 +30,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapAccountEndpoints();
+app.MapUserEndpoints();
+
+app.MapAuthenticationEndpoints();
 
 app.Run();

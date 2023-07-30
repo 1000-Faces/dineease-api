@@ -8,14 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Account", Schema = "userMGT")]
-public partial class Account
+[Table("Authentication", Schema = "userMGT")]
+public partial class Authentication
 {
     [Key]
     [Column("user_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string UserId { get; set; }
+    public int UserId { get; set; }
 
     [Required]
     [Column("password")]
@@ -23,21 +21,19 @@ public partial class Account
     public string Password { get; set; }
 
     [Column("role")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string Role { get; set; }
+    public int? Role { get; set; }
 
-    [Column("created_date", TypeName = "datetime")]
-    public DateTime CreatedDate { get; set; }
+    [Column("last_logged", TypeName = "datetime")]
+    public DateTime LastLogged { get; set; }
 
     [Column("last_updated")]
     public byte[] LastUpdated { get; set; }
 
     [ForeignKey("Role")]
-    [InverseProperty("Account")]
+    [InverseProperty("Authentication")]
     public virtual Role RoleNavigation { get; set; }
 
     [ForeignKey("UserId")]
-    [InverseProperty("Account")]
+    [InverseProperty("Authentication")]
     public virtual User User { get; set; }
 }
