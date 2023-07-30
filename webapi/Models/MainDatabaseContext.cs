@@ -57,8 +57,6 @@ public partial class MainDatabaseContext : DbContext
 
     public virtual DbSet<User> User { get; set; }
 
-    public virtual DbSet<UserAccounts> UserAccounts { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Authentication>(entity =>
@@ -251,16 +249,6 @@ public partial class MainDatabaseContext : DbContext
                         j.IndexerProperty<int>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<int>("FoodId").HasColumnName("food_id");
                     });
-        });
-
-        modelBuilder.Entity<UserAccounts>(entity =>
-        {
-            entity.ToView("UserAccounts");
-
-            entity.Property(e => e.LastUpdated)
-                .IsRowVersion()
-                .IsConcurrencyToken();
-            entity.Property(e => e.Username).IsFixedLength();
         });
 
         OnModelCreatingPartial(modelBuilder);

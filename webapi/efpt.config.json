@@ -110,10 +110,6 @@
       {
          "Name": "[userMGT].[User]",
          "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[UserAccounts]",
-         "ObjectType": 3
       }
    ],
    "UiHint": "AzureSQLMainDatabase",
