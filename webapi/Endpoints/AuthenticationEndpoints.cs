@@ -28,58 +28,22 @@ public static class AuthenticationEndpoints
 
 
         // Authenticate user by email and password
-        group.MapPost("/", async Task<Results<Ok, NotFound>> (LoginData data, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Accepted<User>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
         {
+            // get user by email with authentication data
             var user = await db.User
                 .Include(u => u.Authentication)
                 .FirstOrDefaultAsync(u => u.Email == data.Email);
 
+            // user can be null here. If not, verify password
             if (user == null || !PasswordHasher.Verify(data.Password, user.Authentication?.Password, user.Authentication?.Salt))
             {
-                return TypedResults.NotFound();
+                return TypedResults.Unauthorized();
             }
 
-            return TypedResults.Ok();
+            return TypedResults.Accepted($"/api/auth/{user.Id}", user);
         })
         .WithName("AuthenticateUser")
-        .WithOpenApi();
-
-
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int userid, Authentication authentication, MainDatabaseContext db) =>
-        {
-            var affected = await db.Authentication
-                .Where(model => model.UserId == userid)
-                .ExecuteUpdateAsync(setters => setters
-                  .SetProperty(m => m.UserId, authentication.UserId)
-                  .SetProperty(m => m.Password, authentication.Password)
-                  .SetProperty(m => m.Role, authentication.Role)
-                  .SetProperty(m => m.LastLogged, authentication.LastLogged)
-                  .SetProperty(m => m.LastUpdated, authentication.LastUpdated)
-                );
-
-            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-        })
-        .WithName("UpdateAuthentication")
-        .WithOpenApi();
-
-        group.MapPost("/register", async (Authentication authentication, MainDatabaseContext db) =>
-        {
-            db.Authentication.Add(authentication);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Authentication/{authentication.UserId}",authentication);
-        })
-        .WithName("CreateAuthentication")
-        .WithOpenApi();
-
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int userid, MainDatabaseContext db) =>
-        {
-            var affected = await db.Authentication
-                .Where(model => model.UserId == userid)
-                .ExecuteDeleteAsync();
-
-            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-        })
-        .WithName("DeleteAuthentication")
         .WithOpenApi();
     }
 }
