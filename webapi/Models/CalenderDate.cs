@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("Calender_date")]
+[Index("FoodId", Name = "IX_Calender_date_food_id")]
 public partial class CalenderDate
 {
     [Key]

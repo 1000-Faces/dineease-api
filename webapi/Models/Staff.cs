@@ -13,7 +13,7 @@ public partial class Staff
 {
     [Key]
     [Column("user_id")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
 
     [Column("job_title")]
     [StringLength(50)]
@@ -25,8 +25,4 @@ public partial class Staff
 
     [InverseProperty("Staff")]
     public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
-
-    [ForeignKey("UserId")]
-    [InverseProperty("Staff")]
-    public virtual User User { get; set; }
 }

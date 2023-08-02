@@ -14,7 +14,7 @@ public partial class User
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     [Required]
     [Column("username")]
@@ -57,11 +57,4 @@ public partial class User
 
     [InverseProperty("User")]
     public virtual Customer Customer { get; set; }
-
-    [InverseProperty("User")]
-    public virtual Staff Staff { get; set; }
-
-    [ForeignKey("UserId")]
-    [InverseProperty("User")]
-    public virtual ICollection<Food> Food { get; set; } = new List<Food>();
 }

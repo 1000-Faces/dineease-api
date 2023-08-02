@@ -44,6 +44,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[FoodUser]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Inventory]",
          "ObjectType": 0
       },

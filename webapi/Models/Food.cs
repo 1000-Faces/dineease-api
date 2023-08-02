@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
+[Index("CategoryId", Name = "IX_Food_categoryID")]
 public partial class Food
 {
     [Key]
@@ -47,12 +48,11 @@ public partial class Food
     public virtual FoodCategory Category { get; set; }
 
     [InverseProperty("Food")]
+    public virtual ICollection<Favorites> Favorites { get; set; } = new List<Favorites>();
+
+    [InverseProperty("Food")]
     public virtual FoodPortions FoodPortions { get; set; }
 
     [InverseProperty("Food")]
     public virtual ICollection<MealFoods> MealFoods { get; set; } = new List<MealFoods>();
-
-    [ForeignKey("FoodId")]
-    [InverseProperty("Food")]
-    public virtual ICollection<User> User { get; set; } = new List<User>();
 }

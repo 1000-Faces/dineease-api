@@ -9,11 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("Authentication", Schema = "userMGT")]
+[Index("Role", Name = "IX_Authentication_role")]
 public partial class Authentication
 {
     [Key]
     [Column("user_id")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
 
     [Required]
     [Column("password")]
@@ -22,7 +23,6 @@ public partial class Authentication
 
     [Required]
     [Column("salt")]
-    [MaxLength(50)]
     public byte[] Salt { get; set; }
 
     [Column("role")]
