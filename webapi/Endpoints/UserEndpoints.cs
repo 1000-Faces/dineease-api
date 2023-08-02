@@ -85,17 +85,19 @@ public static class UserEndpoints
                 return TypedResults.BadRequest("User authentication data is required.");
             }
 
+            // create a new guid for the user
+            user.Id = Guid.NewGuid();
             // secure the password
             var hashedPassword = PasswordHasher.Hash(user.Authentication.Password);
             user.Authentication.Password = hashedPassword.Item1;
             user.Authentication.Salt = hashedPassword.Item2;
-
-            var result = user;
-            result.Authentication = null;
+            // set created date
+            user.CreatedDate = DateTime.Today;
+            user.Authentication.LastLogged = DateTime.Now;
 
             db.User.Add(user);
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/User/{user.Id}", result);
+            return TypedResults.Created($"/api/User/{user.Id}", user);
         })
         .WithName("CreateUser")
         .WithOpenApi();

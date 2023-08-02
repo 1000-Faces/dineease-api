@@ -45,7 +45,7 @@ public static class AuthenticationEndpoints
             await db.Authentication
                 .Where(model => model.UserId == user.Id)
                 .ExecuteUpdateAsync(setters => setters
-                  .SetProperty(m => m.LastLogged, DateTime.Today)
+                  .SetProperty(m => m.LastLogged, DateTime.Now)
                 );
 
             return TypedResults.Accepted($"/api/auth/{user.Id}", user);
