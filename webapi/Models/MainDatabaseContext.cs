@@ -65,6 +65,7 @@ public partial class MainDatabaseContext : DbContext
             entity.Property(e => e.LastUpdated)
                 .IsRowVersion()
                 .IsConcurrencyToken();
+            entity.Property(e => e.Salt).IsFixedLength();
 
             entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 
