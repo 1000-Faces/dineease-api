@@ -25,11 +25,15 @@ public partial class MainDatabaseContext : DbContext
 
     public virtual DbSet<Dessert> Dessert { get; set; }
 
+    public virtual DbSet<Favorites> Favorites { get; set; }
+
     public virtual DbSet<Food> Food { get; set; }
 
     public virtual DbSet<FoodCategory> FoodCategory { get; set; }
 
     public virtual DbSet<FoodPortions> FoodPortions { get; set; }
+
+    public virtual DbSet<FoodUser> FoodUser { get; set; }
 
     public virtual DbSet<Inventory> Inventory { get; set; }
 
@@ -61,10 +65,10 @@ public partial class MainDatabaseContext : DbContext
     {
         modelBuilder.Entity<Authentication>(entity =>
         {
+            entity.Property(e => e.UserId).ValueGeneratedNever();
             entity.Property(e => e.LastUpdated)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            // entity.Property(e => e.Salt).IsFixedLength();
 
             entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 
@@ -96,7 +100,14 @@ public partial class MainDatabaseContext : DbContext
 
             entity.Property(e => e.UserId).ValueGeneratedNever();
 
-            entity.HasOne(d => d.User).WithOne(p => p.Customer).HasConstraintName("FK_Customer_User");
+            entity.HasOne(d => d.User).WithOne(p => p.Customer)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Customer_User");
+        });
+
+        modelBuilder.Entity<Favorites>(entity =>
+        {
+            entity.HasOne(d => d.Food).WithMany(p => p.Favorites).HasConstraintName("FK_Favorites_Food");
         });
 
         modelBuilder.Entity<Food>(entity =>
@@ -150,6 +161,7 @@ public partial class MainDatabaseContext : DbContext
                     {
                         j.HasKey("MealId", "PromotionId");
                         j.ToTable("Meal_promotion");
+                        j.HasIndex(new[] { "PromotionId" }, "IX_Meal_promotion_promotion_id");
                         j.IndexerProperty<string>("MealId")
                             .HasMaxLength(10)
                             .IsFixedLength()
@@ -216,9 +228,7 @@ public partial class MainDatabaseContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PK_SupportStaff_1");
 
-            // entity.Property(e => e.UserId).ValueGeneratedNever();
-
-            entity.HasOne(d => d.User).WithOne(p => p.Staff).HasConstraintName("FK_Staff_User");
+            entity.Property(e => e.UserId).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<Table>(entity =>
@@ -230,25 +240,9 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Phone).IsFixedLength();
             entity.Property(e => e.Username).IsFixedLength();
-
-            entity.HasMany(d => d.Food).WithMany(p => p.User)
-                .UsingEntity<Dictionary<string, object>>(
-                    "Favorites",
-                    r => r.HasOne<Food>().WithMany()
-                        .HasForeignKey("FoodId")
-                        .HasConstraintName("FK_Favorites_Food"),
-                    l => l.HasOne<User>().WithMany()
-                        .HasForeignKey("UserId")
-                        .HasConstraintName("FK_Favorites_User"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "FoodId");
-                        j.ToTable("Favorites", "userMGT");
-                        j.IndexerProperty<Guid>("UserId").HasColumnName("user_id");
-                        j.IndexerProperty<int>("FoodId").HasColumnName("food_id");
-                    });
         });
 
         OnModelCreatingPartial(modelBuilder);

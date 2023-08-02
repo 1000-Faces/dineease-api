@@ -25,8 +25,4 @@ public partial class Staff
 
     [InverseProperty("Staff")]
     public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
-
-    [ForeignKey("UserId")]
-    [InverseProperty("Staff")]
-    public virtual User User { get; set; }
 }
