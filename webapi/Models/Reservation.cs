@@ -16,10 +16,10 @@ public partial class Reservation
     public string ReservationId { get; set; }
 
     [Column("customer_id")]
-    public int CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
 
     [Column("staffID")]
-    public int StaffId { get; set; }
+    public Guid StaffId { get; set; }
 
     [Column("tableNo")]
     public int TableNo { get; set; }

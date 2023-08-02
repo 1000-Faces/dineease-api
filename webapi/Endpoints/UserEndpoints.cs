@@ -20,9 +20,9 @@ public static class UserEndpoints
         .WithName("GetAllUsers")
         .WithOpenApi();
 
-        group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (int? id, string? email, MainDatabaseContext db) =>
+        group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
         {
-            if (id.HasValue && id.Value > 0)
+            if (id.HasValue)
             {
                 // If "id" parameter is provided and valid, get user by id
                 return await db.User.AsNoTracking()
@@ -50,7 +50,7 @@ public static class UserEndpoints
         .WithName("GetUserByEmailOrId")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, User user, MainDatabaseContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, User user, MainDatabaseContext db) =>
         {
             var affected = await db.User
                 .Where(model => model.Id == id)
@@ -100,7 +100,7 @@ public static class UserEndpoints
         .WithName("CreateUser")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int id, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, MainDatabaseContext db) =>
         {
             var affected = await db.User
                 .Where(model => model.Id == id)

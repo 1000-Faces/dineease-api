@@ -13,7 +13,7 @@ public partial class Customer
 {
     [Key]
     [Column("user_id")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
 
     [Column("loyality_pts")]
     public int? LoyalityPts { get; set; }

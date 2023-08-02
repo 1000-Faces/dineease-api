@@ -61,11 +61,10 @@ public partial class MainDatabaseContext : DbContext
     {
         modelBuilder.Entity<Authentication>(entity =>
         {
-            entity.Property(e => e.UserId).ValueGeneratedNever();
             entity.Property(e => e.LastUpdated)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            entity.Property(e => e.Salt).IsFixedLength();
+            // entity.Property(e => e.Salt).IsFixedLength();
 
             entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 
@@ -217,7 +216,7 @@ public partial class MainDatabaseContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PK_SupportStaff_1");
 
-            entity.Property(e => e.UserId).ValueGeneratedNever();
+            // entity.Property(e => e.UserId).ValueGeneratedNever();
 
             entity.HasOne(d => d.User).WithOne(p => p.Staff).HasConstraintName("FK_Staff_User");
         });
@@ -247,7 +246,7 @@ public partial class MainDatabaseContext : DbContext
                     {
                         j.HasKey("UserId", "FoodId");
                         j.ToTable("Favorites", "userMGT");
-                        j.IndexerProperty<int>("UserId").HasColumnName("user_id");
+                        j.IndexerProperty<Guid>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<int>("FoodId").HasColumnName("food_id");
                     });
         });
