@@ -8,23 +8,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Food_portions")]
-public partial class FoodPortions
+[PrimaryKey("UserId", "FoodId")]
+[Table("Favorites", Schema = "userMGT")]
+[Index("FoodId", Name = "IX_Favorites_food_id")]
+public partial class Favorites
 {
+    [Key]
+    [Column("user_id")]
+    public int UserId { get; set; }
+
     [Key]
     [Column("food_id")]
     public int FoodId { get; set; }
 
-    [Required]
-    [Column("regular_price")]
-    [StringLength(50)]
-    public string RegularPrice { get; set; }
-
-    [Column("large_price")]
-    [StringLength(10)]
-    public string LargePrice { get; set; }
-
     [ForeignKey("FoodId")]
-    [InverseProperty("FoodPortions")]
+    [InverseProperty("Favorites")]
     public virtual Food Food { get; set; }
 }

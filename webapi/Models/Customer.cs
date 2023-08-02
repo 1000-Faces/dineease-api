@@ -13,9 +13,7 @@ public partial class Customer
 {
     [Key]
     [Column("user_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string UserId { get; set; }
+    public Guid UserId { get; set; }
 
     [Column("loyality_pts")]
     public int? LoyalityPts { get; set; }

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
+[Index("TableNo", Name = "IX_Reservation_tableNo")]
 public partial class Reservation
 {
     [Key]
@@ -15,17 +16,11 @@ public partial class Reservation
     [StringLength(10)]
     public string ReservationId { get; set; }
 
-    [Required]
     [Column("customer_id")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
 
-    [Required]
-    [Column("staffID")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string StaffId { get; set; }
+    [Column("staff_id")]
+    public Guid StaffId { get; set; }
 
     [Column("tableNo")]
     public int TableNo { get; set; }

@@ -8,16 +8,12 @@ namespace webapi.Models;
 
 public partial class MainDatabaseContext : DbContext
 {
-    public MainDatabaseContext()
-    {
-    }
-
     public MainDatabaseContext(DbContextOptions<MainDatabaseContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<Account> Account { get; set; }
+    public virtual DbSet<Authentication> Authentication { get; set; }
 
     public virtual DbSet<Beverage> Beverage { get; set; }
 
@@ -29,11 +25,15 @@ public partial class MainDatabaseContext : DbContext
 
     public virtual DbSet<Dessert> Dessert { get; set; }
 
+    public virtual DbSet<Favorites> Favorites { get; set; }
+
     public virtual DbSet<Food> Food { get; set; }
 
     public virtual DbSet<FoodCategory> FoodCategory { get; set; }
 
     public virtual DbSet<FoodPortions> FoodPortions { get; set; }
+
+    public virtual DbSet<FoodUser> FoodUser { get; set; }
 
     public virtual DbSet<Inventory> Inventory { get; set; }
 
@@ -63,25 +63,22 @@ public partial class MainDatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Account>(entity =>
+        modelBuilder.Entity<Authentication>(entity =>
         {
-            entity.Property(e => e.UserId).IsFixedLength();
+            entity.Property(e => e.UserId).ValueGeneratedNever();
             entity.Property(e => e.LastUpdated)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            entity.Property(e => e.Role).IsFixedLength();
 
-            entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Account).HasConstraintName("FK_Account_Role");
+            entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 
-            entity.HasOne(d => d.User).WithOne(p => p.Account)
+            entity.HasOne(d => d.User).WithOne(p => p.Authentication)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Account_User");
+                .HasConstraintName("FK_Authentication_User");
         });
 
         modelBuilder.Entity<CalenderDate>(entity =>
         {
-            entity.Property(e => e.FoodId).IsFixedLength();
-
             entity.HasOne(d => d.Food).WithMany(p => p.CalenderDate).HasConstraintName("FK_Calender_date_Food");
         });
 
@@ -101,14 +98,20 @@ public partial class MainDatabaseContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PK_Customer_1");
 
-            entity.Property(e => e.UserId).IsFixedLength();
+            entity.Property(e => e.UserId).ValueGeneratedNever();
 
-            entity.HasOne(d => d.User).WithOne(p => p.Customer).HasConstraintName("FK_Customer_User");
+            entity.HasOne(d => d.User).WithOne(p => p.Customer)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Customer_User");
+        });
+
+        modelBuilder.Entity<Favorites>(entity =>
+        {
+            entity.HasOne(d => d.Food).WithMany(p => p.Favorites).HasConstraintName("FK_Favorites_Food");
         });
 
         modelBuilder.Entity<Food>(entity =>
         {
-            entity.Property(e => e.FoodId).IsFixedLength();
             entity.Property(e => e.CategoryId).IsFixedLength();
 
             entity.HasOne(d => d.Category).WithMany(p => p.Food)
@@ -126,7 +129,7 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<FoodPortions>(entity =>
         {
-            entity.Property(e => e.FoodId).IsFixedLength();
+            entity.Property(e => e.FoodId).ValueGeneratedNever();
             entity.Property(e => e.LargePrice).IsFixedLength();
 
             entity.HasOne(d => d.Food).WithOne(p => p.FoodPortions)
@@ -158,6 +161,7 @@ public partial class MainDatabaseContext : DbContext
                     {
                         j.HasKey("MealId", "PromotionId");
                         j.ToTable("Meal_promotion");
+                        j.HasIndex(new[] { "PromotionId" }, "IX_Meal_promotion_promotion_id");
                         j.IndexerProperty<string>("MealId")
                             .HasMaxLength(10)
                             .IsFixedLength()
@@ -174,7 +178,6 @@ public partial class MainDatabaseContext : DbContext
             entity.HasKey(e => e.MealId).HasName("PK_Meal_foods_1");
 
             entity.Property(e => e.MealId).IsFixedLength();
-            entity.Property(e => e.FoodId).IsFixedLength();
 
             entity.HasOne(d => d.Food).WithMany(p => p.MealFoods)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -207,8 +210,6 @@ public partial class MainDatabaseContext : DbContext
             entity.Property(e => e.ActualDeparture)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            entity.Property(e => e.CustomerId).IsFixedLength();
-            entity.Property(e => e.StaffId).IsFixedLength();
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Reservation)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -223,18 +224,11 @@ public partial class MainDatabaseContext : DbContext
                 .HasConstraintName("FK_Reservation_table");
         });
 
-        modelBuilder.Entity<Role>(entity =>
-        {
-            entity.Property(e => e.RoleId).IsFixedLength();
-        });
-
         modelBuilder.Entity<Staff>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK_SupportStaff_1");
 
-            entity.Property(e => e.UserId).IsFixedLength();
-
-            entity.HasOne(d => d.User).WithOne(p => p.Staff).HasConstraintName("FK_Staff_User");
+            entity.Property(e => e.UserId).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<Table>(entity =>
@@ -246,33 +240,9 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.Property(e => e.Id).IsFixedLength();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Phone).IsFixedLength();
             entity.Property(e => e.Username).IsFixedLength();
-
-            entity.HasMany(d => d.Food).WithMany(p => p.User)
-                .UsingEntity<Dictionary<string, object>>(
-                    "Favorites",
-                    r => r.HasOne<Food>().WithMany()
-                        .HasForeignKey("FoodId")
-                        .HasConstraintName("FK_Favorites_Food"),
-                    l => l.HasOne<User>().WithMany()
-                        .HasForeignKey("UserId")
-                        .HasConstraintName("FK_Favorites_User"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "FoodId");
-                        j.ToTable("Favorites", "userMGT");
-                        j.IndexerProperty<string>("UserId")
-                            .HasMaxLength(10)
-                            .IsUnicode(false)
-                            .IsFixedLength()
-                            .HasColumnName("user_id");
-                        j.IndexerProperty<string>("FoodId")
-                            .HasMaxLength(10)
-                            .IsFixedLength()
-                            .HasColumnName("food_id");
-                    });
         });
 
         OnModelCreatingPartial(modelBuilder);

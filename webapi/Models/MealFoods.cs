@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("Meal_foods")]
+[Index("FoodId", Name = "IX_Meal_foods_food_id")]
 public partial class MealFoods
 {
     [Key]
@@ -16,10 +17,8 @@ public partial class MealFoods
     [StringLength(10)]
     public string MealId { get; set; }
 
-    [Required]
     [Column("food_id")]
-    [StringLength(10)]
-    public string FoodId { get; set; }
+    public int FoodId { get; set; }
 
     [Column("quantity1")]
     public int Quantity1 { get; set; }

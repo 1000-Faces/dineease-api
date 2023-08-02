@@ -4,7 +4,7 @@
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
-   "IncludeConnectionString": true,
+   "IncludeConnectionString": false,
    "ModelNamespace": null,
    "OutputContextPath": null,
    "OutputPath": "Models",
@@ -41,6 +41,10 @@
       },
       {
          "Name": "[dbo].[FoodCategory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FoodUser]",
          "ObjectType": 0
       },
       {
@@ -88,7 +92,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[userMGT].[Account]",
+         "Name": "[userMGT].[Authentication]",
          "ObjectType": 0
       },
       {

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("Calender_date")]
+[Index("FoodId", Name = "IX_Calender_date_food_id")]
 public partial class CalenderDate
 {
     [Key]
@@ -16,8 +17,7 @@ public partial class CalenderDate
     public DateTime Date { get; set; }
 
     [Column("food_id")]
-    [StringLength(10)]
-    public string FoodId { get; set; }
+    public int? FoodId { get; set; }
 
     [ForeignKey("FoodId")]
     [InverseProperty("CalenderDate")]

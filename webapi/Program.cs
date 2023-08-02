@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using webapi.Models;
 using webapi;
 using webapi.Endpoints;
@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add services to the container.
 builder.Services.AddDbContext<MainDatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQLDatabase")));
 
@@ -30,6 +31,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapAccountEndpoints();
+app.MapUserEndpoints();
+
+app.MapAuthenticationEndpoints();
 
 app.Run();
