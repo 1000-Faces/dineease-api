@@ -49,7 +49,7 @@ public partial class User
     [Unicode(false)]
     public string UserImageType { get; set; }
 
-    [Column("created_date", TypeName = "datetime")]
+    [Column("created_date", TypeName = "date")]
     public DateTime CreatedDate { get; set; }
 
     [InverseProperty("User")]

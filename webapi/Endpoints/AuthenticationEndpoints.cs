@@ -10,22 +10,31 @@ public static class AuthenticationEndpoints
     {
         var group = routes.MapGroup("/api/Authentication").WithTags(nameof(Authentication));
 
-        group.MapGet("/", async (MainDatabaseContext db) =>
+        // Check if account exists by email
+        group.MapGet("/{email}", async Task<Results<Ok<User>, NotFound>> (string email, MainDatabaseContext db) =>
         {
-            return await db.Authentication.ToListAsync();
-        })
-        .WithName("GetAllAuthentications")
-        .WithOpenApi();
-
-        group.MapGet("/{id}", async Task<Results<Ok<Authentication>, NotFound>> (int userid, MainDatabaseContext db) =>
-        {
-            return await db.Authentication.AsNoTracking()
-                .FirstOrDefaultAsync(model => model.UserId == userid)
-                is Authentication model
+            return await db.User.AsNoTracking()
+                .FirstOrDefaultAsync(model => model.Email == email)
+                is User model
                     ? TypedResults.Ok(model)
                     : TypedResults.NotFound();
         })
-        .WithName("GetAuthenticationById")
+        .WithName("CheckAccountExists")
+        .WithOpenApi();
+
+        group.MapPost("/", async (Authentication authentication, MainDatabaseContext db) =>
+        {
+            // get salt from database
+            var salt = await db.Authentication
+                .Where(model => model.UserId == authentication.UserId)
+                .Select(model => model.Salt)
+                .FirstOrDefaultAsync();
+
+            db.Authentication.Add(authentication);
+            await db.SaveChangesAsync();
+            return TypedResults.Created($"/api/Authentication/{authentication.UserId}", authentication);
+        })
+        .WithName("AuthenticateUser")
         .WithOpenApi();
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int userid, Authentication authentication, MainDatabaseContext db) =>
@@ -45,7 +54,7 @@ public static class AuthenticationEndpoints
         .WithName("UpdateAuthentication")
         .WithOpenApi();
 
-        group.MapPost("/", async (Authentication authentication, MainDatabaseContext db) =>
+        group.MapPost("/register", async (Authentication authentication, MainDatabaseContext db) =>
         {
             db.Authentication.Add(authentication);
             await db.SaveChangesAsync();

@@ -20,6 +20,11 @@ public partial class Authentication
     [Unicode(false)]
     public string Password { get; set; }
 
+    [Required]
+    [Column("salt")]
+    [MaxLength(50)]
+    public byte[] Salt { get; set; }
+
     [Column("role")]
     public int? Role { get; set; }
 
