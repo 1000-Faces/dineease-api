@@ -2,13 +2,17 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using webapi.DataModels;
+using webapi.Services;
+using Microsoft.OpenApi.Writers;
+
 namespace webapi.Endpoints;
 
 public static class AuthenticationEndpoints
 {
     public static void MapAuthenticationEndpoints (this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/Authentication").WithTags(nameof(Authentication));
+        var group = routes.MapGroup("/api/auth").WithTags(nameof(Authentication));
 
         // Check if account exists by email
         group.MapGet("/{email}", async Task<Results<Ok<User>, NotFound>> (string email, MainDatabaseContext db) =>
@@ -22,20 +26,24 @@ public static class AuthenticationEndpoints
         .WithName("CheckAccountExists")
         .WithOpenApi();
 
-        group.MapPost("/", async (Authentication authentication, MainDatabaseContext db) =>
-        {
-            // get salt from database
-            var salt = await db.Authentication
-                .Where(model => model.UserId == authentication.UserId)
-                .Select(model => model.Salt)
-                .FirstOrDefaultAsync();
 
-            db.Authentication.Add(authentication);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Authentication/{authentication.UserId}", authentication);
+        // Authenticate user by email and password
+        group.MapPost("/", async Task<Results<Ok, NotFound>> (LoginData data, MainDatabaseContext db) =>
+        {
+            var user = await db.User
+                .Include(u => u.Authentication)
+                .FirstOrDefaultAsync(u => u.Email == data.Email);
+
+            if (user == null || !PasswordHasher.Verify(data.Password, user.Authentication?.Password, user.Authentication?.Salt))
+            {
+                return TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok();
         })
         .WithName("AuthenticateUser")
         .WithOpenApi();
+
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int userid, Authentication authentication, MainDatabaseContext db) =>
         {

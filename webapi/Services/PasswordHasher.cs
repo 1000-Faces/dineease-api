@@ -24,8 +24,14 @@ namespace webapi.Services
             return (hashed, final_salt);
         }
 
-        public static bool Verify(string password, string hash, byte[] salt)
+        public static bool Verify(string password, string? hash, byte[]? salt)
         {
+            // hash and salt must be present
+            if (hash == null || salt == null)
+            {
+                return false;
+            }
+
             // generate the hash using the same salt and number of iterations
             string new_hash = PasswordHasher.Hash(password, salt).Item1;
 
