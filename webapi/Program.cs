@@ -37,4 +37,6 @@ app.MapAuthenticationEndpoints();
 
 app.MapOrdersEndpoints();
 
+app.MapReservationEndpoints();
+
 app.Run();
