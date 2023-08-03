@@ -71,7 +71,7 @@ public static class UserEndpoints
         .WithName("UpdateUser")
         .WithOpenApi();
 
-        group.MapPost("/", async Task<Results<Created<User>, BadRequest<string>>> (User user, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Created<Guid>, BadRequest<string>>> (User user, MainDatabaseContext db) =>
         {
             // Check if user already exists
             if (await db.User.AnyAsync(model => model.Email == user.Email))
@@ -97,7 +97,7 @@ public static class UserEndpoints
 
             db.User.Add(user);
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/User/{user.Id}", user);
+            return TypedResults.Created($"/api/User/", user.Id);
         })
         .WithName("CreateUser")
         .WithOpenApi();
