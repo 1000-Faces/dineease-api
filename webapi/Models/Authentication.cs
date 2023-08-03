@@ -28,10 +28,10 @@ public partial class Authentication
     [Column("role")]
     public int? Role { get; set; }
 
-    [Column("last_logged", TypeName = "datetime")]
+    [Column("last_logged", TypeName = "date")]
     public DateTime LastLogged { get; set; }
 
-    [Column("last_updated")]
+    [Column("last_updated", TypeName = "datetime")]
     public DateTime LastUpdated { get; set; }
 
     [ForeignKey("Role")]
