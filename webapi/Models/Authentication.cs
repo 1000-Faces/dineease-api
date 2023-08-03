@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Authentication", Schema = "userMGT")]
+[Table("Authentication")]
 [Index("Role", Name = "IX_Authentication_role")]
 public partial class Authentication
 {
@@ -32,7 +32,7 @@ public partial class Authentication
     public DateTime LastLogged { get; set; }
 
     [Column("last_updated")]
-    public byte[] LastUpdated { get; set; }
+    public DateTime LastUpdated { get; set; }
 
     [ForeignKey("Role")]
     [InverseProperty("Authentication")]

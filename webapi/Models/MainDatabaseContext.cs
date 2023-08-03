@@ -66,9 +66,6 @@ public partial class MainDatabaseContext : DbContext
         modelBuilder.Entity<Authentication>(entity =>
         {
             entity.Property(e => e.UserId).ValueGeneratedNever();
-            entity.Property(e => e.LastUpdated)
-                .IsRowVersion()
-                .IsConcurrencyToken();
 
             entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 

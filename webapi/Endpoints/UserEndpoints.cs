@@ -93,7 +93,7 @@ public static class UserEndpoints
             user.Authentication.Salt = hashedPassword.Item2;
             // set created date
             user.CreatedDate = DateTime.Today;
-            user.Authentication.LastLogged = DateTime.Now;
+            user.Authentication.LastUpdated = DateTime.Now;
 
             db.User.Add(user);
             await db.SaveChangesAsync();
