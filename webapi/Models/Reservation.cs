@@ -39,8 +39,10 @@ public partial class Reservation
     [InverseProperty("Reservation")]
     public virtual Customer Customer { get; set; }
 
-    [InverseProperty("Reservation")]
-    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
+    //uncomment later
+
+    //[InverseProperty("Reservation")]
+    //public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
 
     [ForeignKey("StaffId")]
     [InverseProperty("Reservation")]

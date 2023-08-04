@@ -39,7 +39,11 @@ public partial class Orders
     [InverseProperty("Order")]
     public virtual Checkout Checkout { get; set; }
 
-    [ForeignKey("ReservationId")]
-    [InverseProperty("Orders")]
-    public virtual Reservation Reservation { get; set; }
+    // commented following to remove foreignkey
+    // uncomment and fix later including
+    // line 197 in models/maindatabasecontext.cs and models/orders.cs line 44
+
+    //[ForeignKey("ReservationId")]
+    //[InverseProperty("Orders")]
+    //public virtual Reservation Reservation { get; set; }
 }

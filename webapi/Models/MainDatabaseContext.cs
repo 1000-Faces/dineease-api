@@ -191,9 +191,12 @@ public partial class MainDatabaseContext : DbContext
             entity.Property(e => e.OrderStatus).IsFixedLength();
             entity.Property(e => e.ReservationId).IsFixedLength();
 
-            entity.HasOne(d => d.Reservation).WithMany(p => p.Orders)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_orders_Reservation");
+            // commented following to remove foreignkey
+            // uncomment and fix later
+
+            //entity.HasOne(d => d.Reservation).WithMany(p => p.Orders)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_orders_Reservation");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
