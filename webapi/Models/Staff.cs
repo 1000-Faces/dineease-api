@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Staff", Schema = "userMGT")]
+[Table("Staff")]
 public partial class Staff
 {
     [Key]
