@@ -17,6 +17,17 @@ public static class OrdersEndpoints
         .WithName("GetAllOrders")
         .WithOpenApi();
 
+        group.MapGet("/pending", async (MainDatabaseContext db) =>
+        {
+            var pendingorder = await db.Orders
+                .Where(r => r.OrderStatus == "pending")
+                .ToListAsync();
+
+            return pendingorder;
+        })
+        .WithName("getpendingorders")
+        .WithOpenApi();
+
         group.MapGet("/{id}", async Task<Results<Ok<Orders>, NotFound>> (string orderid, MainDatabaseContext db) =>
         {
             return await db.Orders.AsNoTracking()
@@ -28,17 +39,19 @@ public static class OrdersEndpoints
         .WithName("GetOrdersById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (string orderid, Orders orders, MainDatabaseContext db) =>
+        //group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
+        group.MapPut("/put", async Task<Results<Ok, NotFound , BadRequest<string>>> (string? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
                 .ExecuteUpdateAsync(setters => setters
-                  .SetProperty(m => m.OrderId, orders.OrderId)
-                  .SetProperty(m => m.ReservationId, orders.ReservationId)
-                  .SetProperty(m => m.Total, orders.Total)
-                  .SetProperty(m => m.Discount, orders.Discount)
-                  .SetProperty(m => m.Price, orders.Price)
-                  .SetProperty(m => m.OrderStatus, orders.OrderStatus)
+                  //.SetProperty(m => m.OrderId, orders.OrderId)
+                  //.SetProperty(m => m.ReservationId, orders.ReservationId)
+                  //.SetProperty(m => m.Total, orders.Total)
+                  //.SetProperty(m => m.Discount, orders.Discount)
+                  //.SetProperty(m => m.Price, orders.Price)
+                  .SetProperty(m => m.OrderStatus, status)
+                  //.SetProperty(m => m.OrderStatus, orders.OrderStatus)
                 );
 
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using NuGet.Packaging.Signing;
+
 namespace webapi.Endpoints;
 
 public static class ReservationEndpoints
@@ -49,6 +51,13 @@ public static class ReservationEndpoints
 
         group.MapPost("/", async (Reservation reservation, MainDatabaseContext db) =>
         {
+            // for dev perposses, res time is set to current date time 
+            // it shold be provided on the post req
+            reservation.ReservationDatetime = DateTime.Now;
+            if (reservation.ReservationDatetime != null)
+            {
+                reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
+            }
             db.Reservation.Add(reservation);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}",reservation);

@@ -23,6 +23,6 @@ public partial class Table
     [StringLength(3)]
     public string Availability { get; set; }
 
-    [InverseProperty("TableNoNavigation")]
-    public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
+    //[InverseProperty("TableNoNavigation")]
+    //public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
 }

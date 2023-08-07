@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using webapi.Models;
 
@@ -11,9 +12,11 @@ using webapi.Models;
 namespace webapi.Migrations
 {
     [DbContext(typeof(MainDatabaseContext))]
-    partial class MainDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230805040210_DropReservationFK")]
+    partial class DropReservationFK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,7 +79,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "Role" }, "IX_Authentication_role");
 
-                    b.ToTable("Authentication", (string)null);
+                    b.ToTable("Authentication");
                 });
 
             modelBuilder.Entity("webapi.Models.Beverage", b =>
@@ -89,7 +92,7 @@ namespace webapi.Migrations
                         .HasColumnType("int")
                         .HasColumnName("food_id");
 
-                    b.ToTable("Beverage", (string)null);
+                    b.ToTable("Beverage");
                 });
 
             modelBuilder.Entity("webapi.Models.CalenderDate", b =>
@@ -106,7 +109,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "FoodId" }, "IX_Calender_date_food_id");
 
-                    b.ToTable("Calender_date", (string)null);
+                    b.ToTable("Calender_date");
                 });
 
             modelBuilder.Entity("webapi.Models.Checkout", b =>
@@ -139,7 +142,7 @@ namespace webapi.Migrations
 
                     b.HasKey("OrderId");
 
-                    b.ToTable("checkout", (string)null);
+                    b.ToTable("checkout");
                 });
 
             modelBuilder.Entity("webapi.Models.Customer", b =>
@@ -155,7 +158,7 @@ namespace webapi.Migrations
                     b.HasKey("UserId")
                         .HasName("PK_Customer_1");
 
-                    b.ToTable("Customer", (string)null);
+                    b.ToTable("Customer");
                 });
 
             modelBuilder.Entity("webapi.Models.Dessert", b =>
@@ -174,7 +177,7 @@ namespace webapi.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("served_temparature");
 
-                    b.ToTable("Dessert", (string)null);
+                    b.ToTable("Dessert");
                 });
 
             modelBuilder.Entity("webapi.Models.Favorites", b =>
@@ -238,7 +241,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "CategoryId" }, "IX_Food_categoryID");
 
-                    b.ToTable("Food", (string)null);
+                    b.ToTable("Food");
                 });
 
             modelBuilder.Entity("webapi.Models.FoodCategory", b =>
@@ -259,7 +262,7 @@ namespace webapi.Migrations
                     b.HasKey("CategoryId")
                         .HasName("PK_foodCategory");
 
-                    b.ToTable("FoodCategory", (string)null);
+                    b.ToTable("FoodCategory");
                 });
 
             modelBuilder.Entity("webapi.Models.FoodPortions", b =>
@@ -282,7 +285,7 @@ namespace webapi.Migrations
 
                     b.HasKey("FoodId");
 
-                    b.ToTable("Food_portions", (string)null);
+                    b.ToTable("Food_portions");
                 });
 
             modelBuilder.Entity("webapi.Models.FoodUser", b =>
@@ -295,7 +298,7 @@ namespace webapi.Migrations
 
                     b.HasKey("FoodId", "UserId");
 
-                    b.ToTable("FoodUser", (string)null);
+                    b.ToTable("FoodUser");
                 });
 
             modelBuilder.Entity("webapi.Models.Inventory", b =>
@@ -306,7 +309,7 @@ namespace webapi.Migrations
                         .HasColumnName("food_id")
                         .IsFixedLength();
 
-                    b.ToTable("Inventory", (string)null);
+                    b.ToTable("Inventory");
                 });
 
             modelBuilder.Entity("webapi.Models.MainDish", b =>
@@ -319,7 +322,7 @@ namespace webapi.Migrations
                         .HasColumnType("int")
                         .HasColumnName("main_dish_id");
 
-                    b.ToTable("Main_dish", (string)null);
+                    b.ToTable("Main_dish");
                 });
 
             modelBuilder.Entity("webapi.Models.Meal", b =>
@@ -345,7 +348,7 @@ namespace webapi.Migrations
 
                     b.HasKey("MealId");
 
-                    b.ToTable("Meal", (string)null);
+                    b.ToTable("Meal");
                 });
 
             modelBuilder.Entity("webapi.Models.MealFoods", b =>
@@ -373,7 +376,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "FoodId" }, "IX_Meal_foods_food_id");
 
-                    b.ToTable("Meal_foods", (string)null);
+                    b.ToTable("Meal_foods");
                 });
 
             modelBuilder.Entity("webapi.Models.Orders", b =>
@@ -414,7 +417,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "ReservationId" }, "IX_orders_reservation_id");
 
-                    b.ToTable("orders", (string)null);
+                    b.ToTable("orders");
                 });
 
             modelBuilder.Entity("webapi.Models.Promotion", b =>
@@ -446,7 +449,7 @@ namespace webapi.Migrations
 
                     b.HasKey("PromotionId");
 
-                    b.ToTable("promotion", (string)null);
+                    b.ToTable("promotion");
                 });
 
             modelBuilder.Entity("webapi.Models.Reservation", b =>
@@ -488,7 +491,7 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "TableNo" }, "IX_Reservation_tableNo");
 
-                    b.ToTable("Reservation", (string)null);
+                    b.ToTable("Reservation");
                 });
 
             modelBuilder.Entity("webapi.Models.Role", b =>
@@ -509,7 +512,7 @@ namespace webapi.Migrations
 
                     b.HasKey("RoleId");
 
-                    b.ToTable("Role", (string)null);
+                    b.ToTable("Role");
                 });
 
             modelBuilder.Entity("webapi.Models.SideDish", b =>
@@ -522,7 +525,7 @@ namespace webapi.Migrations
                         .HasColumnType("int")
                         .HasColumnName("side_dish_id");
 
-                    b.ToTable("Side_dish", (string)null);
+                    b.ToTable("Side_dish");
                 });
 
             modelBuilder.Entity("webapi.Models.Staff", b =>
@@ -544,7 +547,7 @@ namespace webapi.Migrations
                     b.HasKey("UserId")
                         .HasName("PK_SupportStaff_1");
 
-                    b.ToTable("Staff", (string)null);
+                    b.ToTable("Staff");
                 });
 
             modelBuilder.Entity("webapi.Models.Stater", b =>
@@ -557,7 +560,7 @@ namespace webapi.Migrations
                         .HasColumnType("int")
                         .HasColumnName("stater_id");
 
-                    b.ToTable("Stater", (string)null);
+                    b.ToTable("Stater");
                 });
 
             modelBuilder.Entity("webapi.Models.Table", b =>
@@ -580,7 +583,7 @@ namespace webapi.Migrations
 
                     b.HasKey("TableNo");
 
-                    b.ToTable("table", (string)null);
+                    b.ToTable("table");
                 });
 
             modelBuilder.Entity("webapi.Models.User", b =>
@@ -640,7 +643,7 @@ namespace webapi.Migrations
                     b.HasIndex(new[] { "Email" }, "IX_User")
                         .IsUnique();
 
-                    b.ToTable("User", (string)null);
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("MealPromotion", b =>
