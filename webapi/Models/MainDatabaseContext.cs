@@ -208,7 +208,8 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.Property(e => e.ReservationId).IsFixedLength();
+            //entity.Property(e => e.ReservationId).IsFixedLength();
+            entity.Property(e => e.ReservationId).ValueGeneratedNever();
             entity.Property(e => e.ActualDeparture)
                 .IsRowVersion()
                 .IsConcurrencyToken();

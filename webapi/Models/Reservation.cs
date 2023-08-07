@@ -14,7 +14,8 @@ public partial class Reservation
     [Key]
     [Column("reservation_id")]
     [StringLength(10)]
-    public string ReservationId { get; set; }
+    //public string ReservationId { get; set; }
+    public Guid ReservationId { get; set; }
 
     [Column("customer_id")]
     public Guid CustomerId { get; set; }
