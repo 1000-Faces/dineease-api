@@ -19,7 +19,8 @@ public static class ReservationEndpoints
         .WithName("GetAllReservations")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (string reservationid, MainDatabaseContext db) =>
+        //group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (string reservationid, MainDatabaseContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
         {
             return await db.Reservation.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.ReservationId == reservationid)
@@ -30,7 +31,8 @@ public static class ReservationEndpoints
         .WithName("GetReservationById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (string reservationid, Reservation reservation, MainDatabaseContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, Reservation reservation, MainDatabaseContext db) =>
+        //group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (string reservationid, Reservation reservation, MainDatabaseContext db) =>
         {
             var affected = await db.Reservation
                 .Where(model => model.ReservationId == reservationid)
@@ -65,7 +67,8 @@ public static class ReservationEndpoints
         .WithName("CreateReservation")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (string reservationid, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
+        //group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (string reservationid, MainDatabaseContext db) =>
         {
             var affected = await db.Reservation
                 .Where(model => model.ReservationId == reservationid)
