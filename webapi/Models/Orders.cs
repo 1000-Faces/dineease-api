@@ -16,6 +16,7 @@ public partial class Orders
     [Column("order_id")]
     [StringLength(10)]
     public string OrderId { get; set; }
+    //public Guid OrderId { get; set; }
 
     [Required]
     [Column("reservation_id")]
