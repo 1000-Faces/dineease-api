@@ -61,6 +61,14 @@ public static class OrdersEndpoints
 
         group.MapPost("/", async (Orders orders, MainDatabaseContext db) =>
         {
+            // a random id but not unique is generated here
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_*@!$%&^?";
+            var random = new Random();
+
+            orders.OrderId = new string(Enumerable.Repeat(chars, 10)
+                .Select(s => s[random.Next(s.Length)])
+                .ToArray());
+
             db.Orders.Add(orders);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/Orders/{orders.OrderId}",orders);

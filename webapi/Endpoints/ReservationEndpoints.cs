@@ -53,6 +53,7 @@ public static class ReservationEndpoints
 
         group.MapPost("/", async (Reservation reservation, MainDatabaseContext db) =>
         {
+            reservation.ReservationId = Guid.NewGuid();
             // for dev perposses, res time is set to current date time 
             // it shold be provided on the post req
             reservation.ReservationDatetime = DateTime.Now;
@@ -68,7 +69,6 @@ public static class ReservationEndpoints
         .WithOpenApi();
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
-        //group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (string reservationid, MainDatabaseContext db) =>
         {
             var affected = await db.Reservation
                 .Where(model => model.ReservationId == reservationid)
