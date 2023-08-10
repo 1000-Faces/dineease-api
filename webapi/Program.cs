@@ -49,6 +49,9 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+// add CORS middleware
+app.UseCors(specificOrigins);
+
 app.MapControllers();
 
 app.MapUserEndpoints();
