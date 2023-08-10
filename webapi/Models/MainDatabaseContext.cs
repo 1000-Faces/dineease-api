@@ -66,9 +66,6 @@ public partial class MainDatabaseContext : DbContext
         modelBuilder.Entity<Authentication>(entity =>
         {
             entity.Property(e => e.UserId).ValueGeneratedNever();
-            entity.Property(e => e.LastUpdated)
-                .IsRowVersion()
-                .IsConcurrencyToken();
 
             entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Authentication).HasConstraintName("FK_Authentication_Role");
 
@@ -85,6 +82,7 @@ public partial class MainDatabaseContext : DbContext
         modelBuilder.Entity<Checkout>(entity =>
         {
             entity.Property(e => e.OrderId).IsFixedLength();
+            //entity.Property(e => e.OrderId).ValueGeneratedNever();
             entity.Property(e => e.Amount).IsFixedLength();
             entity.Property(e => e.PaymentMethod).IsFixedLength();
             entity.Property(e => e.StaffId).IsFixedLength();
@@ -190,13 +188,17 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<Orders>(entity =>
         {
+            //entity.Property(e => e.OrderId).ValueGeneratedNever();
             entity.Property(e => e.OrderId).IsFixedLength();
             entity.Property(e => e.OrderStatus).IsFixedLength();
             entity.Property(e => e.ReservationId).IsFixedLength();
 
-            entity.HasOne(d => d.Reservation).WithMany(p => p.Orders)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_orders_Reservation");
+            // commented following to remove foreignkey
+            // uncomment and fix later
+
+            //entity.HasOne(d => d.Reservation).WithMany(p => p.Orders)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_orders_Reservation");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
@@ -206,22 +208,26 @@ public partial class MainDatabaseContext : DbContext
 
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.Property(e => e.ReservationId).IsFixedLength();
+            //entity.Property(e => e.ReservationId).IsFixedLength();
+            entity.Property(e => e.ReservationId).ValueGeneratedNever();
             entity.Property(e => e.ActualDeparture)
                 .IsRowVersion()
                 .IsConcurrencyToken();
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Reservation)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Reservation_Customer");
+            // commented following to remove foreignkey
+            // uncomment and fix later
 
-            entity.HasOne(d => d.Staff).WithMany(p => p.Reservation)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Reservation_Staff");
+            //entity.HasOne(d => d.Customer).WithMany(p => p.Reservation)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_Reservation_Customer");
 
-            entity.HasOne(d => d.TableNoNavigation).WithMany(p => p.Reservation)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Reservation_table");
+            //entity.HasOne(d => d.Staff).WithMany(p => p.Reservation)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_Reservation_Staff");
+
+            //entity.HasOne(d => d.TableNoNavigation).WithMany(p => p.Reservation)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_Reservation_table");
         });
 
         modelBuilder.Entity<Staff>(entity =>

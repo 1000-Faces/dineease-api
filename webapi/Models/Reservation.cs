@@ -14,7 +14,8 @@ public partial class Reservation
     [Key]
     [Column("reservation_id")]
     [StringLength(10)]
-    public string ReservationId { get; set; }
+    //public string ReservationId { get; set; }
+    public Guid ReservationId { get; set; }
 
     [Column("customer_id")]
     public Guid CustomerId { get; set; }
@@ -35,18 +36,20 @@ public partial class Reservation
     [Column("actual_departure")]
     public byte[] ActualDeparture { get; set; }
 
-    [ForeignKey("CustomerId")]
-    [InverseProperty("Reservation")]
-    public virtual Customer Customer { get; set; }
+    //[ForeignKey("CustomerId")]
+    //[InverseProperty("Reservation")]
+    //public virtual Customer Customer { get; set; }
 
-    [InverseProperty("Reservation")]
-    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
+    //uncomment later
 
-    [ForeignKey("StaffId")]
-    [InverseProperty("Reservation")]
-    public virtual Staff Staff { get; set; }
+    //[InverseProperty("Reservation")]
+    //public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
 
-    [ForeignKey("TableNo")]
-    [InverseProperty("Reservation")]
-    public virtual Table TableNoNavigation { get; set; }
+    //[ForeignKey("StaffId")]
+    //[InverseProperty("Reservation")]
+    //public virtual Staff Staff { get; set; }
+
+    //[ForeignKey("TableNo")]
+    //[InverseProperty("Reservation")]
+    //public virtual Table TableNoNavigation { get; set; }
 }

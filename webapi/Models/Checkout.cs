@@ -15,6 +15,7 @@ public partial class Checkout
     [Column("orderID")]
     [StringLength(10)]
     public string OrderId { get; set; }
+    //public Guid OrderId { get; set; }
 
     [Required]
     [Column("staffID")]
