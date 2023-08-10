@@ -32,7 +32,12 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(builder =>
     {
         // builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
-        builder.AllowAnyOrigin(); // adding wildcard to allow any origin
+       // builder.AllowAnyOrigin(); // adding wildcard to allow any origin
+       builder.SetIsOriginAllowed(isOriginAllowed: _ => true)// adding wildcard to allow any origin
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+
     });
 });
 
