@@ -2,6 +2,7 @@
 using webapi.Models;
 using webapi;
 using webapi.Endpoints;
+using Microsoft.Extensions.Options;
 
 var specificOrigins = "_dineEaseSpecificOrigins";
 
@@ -18,13 +19,20 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MainDatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQLDatabase")));
 
+// enabling CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: specificOrigins,
-                      builder =>
-                      {
-                          builder.WithOrigins("http://localhost:5173/");
-                      });
+    //options.AddPolicy(name: specificOrigins,
+    //                  builder =>
+    //                  {
+    //                      builder.WithOrigins("http://localhost:5173/");
+    //                  });
+
+    // enable CORS for localhost
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
+    });
 });
 
 var app = builder.Build();
