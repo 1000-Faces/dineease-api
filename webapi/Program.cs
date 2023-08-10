@@ -4,7 +4,7 @@ using webapi;
 using webapi.Endpoints;
 using Microsoft.Extensions.Options;
 
-var specificOrigins = "_dineEaseSpecificOrigins";
+var _corsAllOrigins = "_dineEaseAllOriginsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,43 +22,30 @@ builder.Services.AddDbContext<MainDatabaseContext>(options =>
 // enabling CORS
 builder.Services.AddCors(options =>
 {
-    //options.AddPolicy(name: specificOrigins,
-    //                  builder =>
-    //                  {
-    //                      builder.WithOrigins("http://localhost:5173/");
-    //                  });
-
-    // enable CORS for localhost
-    options.AddDefaultPolicy(builder =>
-    {
-        // builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
-       // builder.AllowAnyOrigin(); // adding wildcard to allow any origin
-       builder.SetIsOriginAllowed(isOriginAllowed: _ => true)// adding wildcard to allow any origin
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
-
-    });
+    options.AddPolicy(_corsAllOrigins,
+        builder => 
+        {
+            // adding wildcard to allow any origin
+            builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        });
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-// enable swagger ui for production
-app.UseSwagger();
-app.UseSwaggerUI();
+if (builder.Configuration["AllowSwagger"] == "true")
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 // add CORS middleware
-app.UseCors(specificOrigins);
+app.UseCors(_corsAllOrigins);
 
 app.MapControllers();
 
