@@ -32,6 +32,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(builder =>
     {
         builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
+        builder.WithOrigins("http://127.0.0.1:5173");
     });
 });
 
