@@ -28,7 +28,7 @@ public static class AuthenticationEndpoints
 
 
         // Authenticate user by email and password
-        group.MapPost("/", async Task<Results<Accepted<User>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Accepted<Guid>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
         {
             // get user by email with authentication data
             var user = await db.User
@@ -48,7 +48,7 @@ public static class AuthenticationEndpoints
                   .SetProperty(m => m.LastLogged, DateTime.Now)
                 );
 
-            return TypedResults.Accepted($"/api/auth/{user.Id}", user);
+            return TypedResults.Accepted($"/api/auth/", user.Id);
         })
         .WithName("AuthenticateUser")
         .WithOpenApi();
