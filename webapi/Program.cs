@@ -31,8 +31,8 @@ builder.Services.AddCors(options =>
     // enable CORS for localhost
     options.AddDefaultPolicy(builder =>
     {
-        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
-        builder.WithOrigins("http://127.0.0.1:5173");
+        // builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
+        builder.AllowAnyOrigin(); // adding wildcard to allow any origin
     });
 });
 
