@@ -148,6 +148,13 @@ public static class ReservationEndpoints
             {
                 reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
             }
+
+            if (reservation.StaffId == Guid.Empty)
+            {
+                Guid placeholderValue = Guid.Parse("00000000-0000-0000-0000-000000000000");
+                reservation.StaffId = placeholderValue;
+
+            }
             db.Reservation.Add(reservation);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}",reservation);
