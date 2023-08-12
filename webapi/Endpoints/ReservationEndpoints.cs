@@ -19,6 +19,19 @@ public static class ReservationEndpoints
         .WithName("GetAllReservations")
         .WithOpenApi();
 
+        group.MapGet("/today", async (MainDatabaseContext db) =>
+        {
+            DateTime today = DateTime.Now.Date; // Get today's date without the time
+
+            var reservations = await db.Reservation
+                .Where(r => r.Departure.HasValue && r.Departure.Value > DateTime.Now && r.Departure.Value.Date == today)
+                .ToListAsync();
+
+            return reservations;
+        })
+        .WithName("GetReservationsForToday")
+        .WithOpenApi();
+
         //group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (string reservationid, MainDatabaseContext db) =>
         group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
         {
@@ -83,26 +96,40 @@ public static class ReservationEndpoints
         .WithName("UpdateReservation")
         .WithOpenApi();
 
-
-        group.MapPut("/departure/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
+        // updating departue time
+        group.MapPut("/departure", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
         {
-            var reservation = await db.Reservation
-                .FirstOrDefaultAsync(model => model.ReservationId == reservationid);
+            var affected = await db.Reservation
+                .Where(model => model.ReservationId == reservationid)
+                .ExecuteUpdateAsync(setters => setters
+                  .SetProperty(m => m.Departure, DateTime.Now)
+                );
 
-            if (reservation != null)
-            {
-                reservation.ActualDeparture = BitConverter.GetBytes(DateTime.Now.Ticks);
-                db.Update(reservation);
-                await db.SaveChangesAsync();
-                return TypedResults.Ok();
-            }
-            else
-            {
-                return TypedResults.NotFound();
-            }
+            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
         })
-        .WithName("UpdateActualDeparture")
+        .WithName("Update departure time")
         .WithOpenApi();
+
+
+        //group.MapPut("/departure/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
+        //{
+        //    var reservation = await db.Reservation
+        //        .FirstOrDefaultAsync(model => model.ReservationId == reservationid);
+
+        //    if (reservation != null)
+        //    {
+        //        reservation.ActualDeparture = BitConverter.GetBytes(DateTime.Now.Ticks);
+        //        db.Update(reservation);
+        //        await db.SaveChangesAsync();
+        //        return TypedResults.Ok();
+        //    }
+        //    else
+        //    {
+        //        return TypedResults.NotFound();
+        //    }
+        //})
+        //.WithName("UpdateActualDeparture")
+        //.WithOpenApi();
 
 
 
@@ -114,7 +141,8 @@ public static class ReservationEndpoints
             // it shold be provided on the post req
             if (reservation.ReservationDatetime == null)
             {
-                reservation.ReservationDatetime = DateTime.Now;
+                reservation.ReservationDatetime = DateTime.Now.AddHours(1);
+                reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
             }
             else
             {
