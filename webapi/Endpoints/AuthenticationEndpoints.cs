@@ -15,13 +15,52 @@ public static class AuthenticationEndpoints
         var group = routes.MapGroup("/api/auth").WithTags(nameof(Authentication));
 
         // Check if account exists by email
-        group.MapGet("/{email}", async Task<Results<Ok<User>, NotFound>> (string email, MainDatabaseContext db) =>
+        //group.MapGet("/{email}", async Task<Results<Ok<User>, NotFound>> (string email, MainDatabaseContext db) =>
+        //{
+        //    return await db.User.AsNoTracking()
+        //        .FirstOrDefaultAsync(model => model.Email == email)
+        //        is User model
+        //            ? TypedResults.Ok(model)
+        //            : TypedResults.NotFound();
+        //})
+        //.WithName("CheckAccountExists")
+        //.WithOpenApi();
+
+        group.MapGet("/{email_id}", async Task<Results<Ok<Object>, NotFound>> (Guid? id,string? email, MainDatabaseContext db) =>
         {
-            return await db.User.AsNoTracking()
-                .FirstOrDefaultAsync(model => model.Email == email)
-                is User model
-                    ? TypedResults.Ok(model)
-                    : TypedResults.NotFound();
+            if (id.HasValue || !string.IsNullOrEmpty(email))
+            {
+                User? userModel = null;
+                if (id.HasValue)
+                {
+                    userModel = await db.User.AsNoTracking()
+                    .FirstOrDefaultAsync(model => model.Id == id);
+                }
+                else if (!string.IsNullOrEmpty(email))
+                {
+                    userModel = await db.User.AsNoTracking()
+                    .FirstOrDefaultAsync(model => model.Email == email);
+                }
+
+                if (userModel != null)
+                {
+                    var authentication = await db.Authentication.AsNoTracking()
+                        .FirstOrDefaultAsync(auth => auth.UserId == userModel.Id);
+
+                    if (authentication != null)
+                    {
+                        var response = new
+                        {
+                            User = userModel,
+                            Role = authentication.Role
+                        };
+
+                        return TypedResults.Ok<Object>(response);
+                    }
+                }
+            }
+
+            return TypedResults.NotFound();
         })
         .WithName("CheckAccountExists")
         .WithOpenApi();
