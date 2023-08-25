@@ -4,31 +4,39 @@ using webapi;
 using webapi.Endpoints;
 using Microsoft.Extensions.Options;
 
-var _corsAllOrigins = "_dineEaseAllOriginsPolicy";
+// var _allowSpecificOrigins = "_dineEaseSpecificOriginsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// -------------------- Services --------------------
+// enabling CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+               builder =>
+               {
+                   // adding wildcard to allow any origin
+                   builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+               });
+
+    //options.AddPolicy(_allowSpecificOrigins,
+    //    builder =>
+    //    {
+    //        // adding wildcard to allow any origin
+    //        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    //    });
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add services to the container.
+// Configure db context with the connection string
 builder.Services.AddDbContext<MainDatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQLDatabase")));
 
-// enabling CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(_corsAllOrigins,
-        builder => 
-        {
-            // adding wildcard to allow any origin
-            builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-        });
-});
+// -------------------- Services --------------------
 
 var app = builder.Build();
 
@@ -42,10 +50,10 @@ if (builder.Configuration["AllowSwagger"] == "true")
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 // add CORS middleware
-app.UseCors(_corsAllOrigins);
+app.UseCors(); // this is the default policy
+
+app.UseAuthorization();
 
 app.MapControllers();
 
