@@ -8,12 +8,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[PrimaryKey("FoodId", "UserId")]
+[PrimaryKey("FoodId", "CustomerId")]
 public partial class FoodUser
 {
     [Key]
-    public int FoodId { get; set; }
+    public Guid FoodId { get; set; }
 
     [Key]
-    public int UserId { get; set; }
+    [Column("CustomerID")]
+    public Guid CustomerId { get; set; }
+
+    public int? OrderCount { get; set; }
+
+    [ForeignKey("CustomerId")]
+    [InverseProperty("FoodUser")]
+    public virtual Customer Customer { get; set; }
+
+    [ForeignKey("FoodId")]
+    [InverseProperty("FoodUser")]
+    public virtual Food Food { get; set; }
 }

@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [PrimaryKey("UserId", "FoodId")]
-[Table("Favorites", Schema = "userMGT")]
 [Index("FoodId", Name = "IX_Favorites_food_id")]
 public partial class Favorites
 {
@@ -20,8 +19,4 @@ public partial class Favorites
     [Key]
     [Column("food_id")]
     public int FoodId { get; set; }
-
-    [ForeignKey("FoodId")]
-    [InverseProperty("Favorites")]
-    public virtual Food Food { get; set; }
 }

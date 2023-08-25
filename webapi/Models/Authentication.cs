@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Authentication")]
 [Index("Role", Name = "IX_Authentication_role")]
 public partial class Authentication
 {

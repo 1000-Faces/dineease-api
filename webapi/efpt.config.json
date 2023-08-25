@@ -16,6 +16,10 @@
    "T4TemplatePath": null,
    "Tables": [
       {
+         "Name": "[dbo].[Authentication]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Beverage]",
          "ObjectType": 0
       },
@@ -28,7 +32,15 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Customer]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Dessert]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Favorites]",
          "ObjectType": 0
       },
       {
@@ -68,6 +80,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Order_Foods]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[orders]",
          "ObjectType": 0
       },
@@ -80,7 +96,15 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Role]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Side_dish]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Staff]",
          "ObjectType": 0
       },
       {
@@ -92,27 +116,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[userMGT].[Authentication]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[userMGT].[Customer]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[userMGT].[Favorites]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[userMGT].[Role]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[userMGT].[Staff]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[userMGT].[User]",
+         "Name": "[dbo].[User]",
          "ObjectType": 0
       }
    ],

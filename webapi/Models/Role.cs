@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Role")]
 public partial class Role
 {
     [Key]

@@ -12,12 +12,12 @@ public partial class FoodCategory
 {
     [Key]
     [Column("categoryID")]
-    [StringLength(10)]
-    public string CategoryId { get; set; }
+    public int CategoryId { get; set; }
 
     [Required]
     [Column("categoryName")]
     [StringLength(50)]
+    [Unicode(false)]
     public string CategoryName { get; set; }
 
     [InverseProperty("Category")]

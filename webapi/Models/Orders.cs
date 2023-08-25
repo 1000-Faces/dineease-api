@@ -14,37 +14,40 @@ public partial class Orders
 {
     [Key]
     [Column("order_id")]
-    [StringLength(10)]
-    public string OrderId { get; set; }
-    //public Guid OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
-    [Required]
     [Column("reservation_id")]
-    [StringLength(10)]
-    public string ReservationId { get; set; }
+    public Guid? ReservationId { get; set; }
 
     [Column("total")]
     public double Total { get; set; }
 
     [Column("discount")]
-    public double Discount { get; set; }
+    public double? Discount { get; set; }
 
     [Column("price")]
-    public double Price { get; set; }
+    public double? Price { get; set; }
 
     [Required]
     [Column("order_status")]
     [StringLength(10)]
     public string OrderStatus { get; set; }
 
+    [Column("promotionID")]
+    public Guid? PromotionId { get; set; }
+
     [InverseProperty("Order")]
     public virtual Checkout Checkout { get; set; }
 
-    // commented following to remove foreignkey
-    // uncomment and fix later including
-    // line 197 in models/maindatabasecontext.cs and models/orders.cs line 44
+    [ForeignKey("PromotionId")]
+    [InverseProperty("Orders")]
+    public virtual Promotion Promotion { get; set; }
 
-    //[ForeignKey("ReservationId")]
-    //[InverseProperty("Orders")]
-    //public virtual Reservation Reservation { get; set; }
+    [ForeignKey("ReservationId")]
+    [InverseProperty("Orders")]
+    public virtual Reservation Reservation { get; set; }
+
+    [ForeignKey("OrderId")]
+    [InverseProperty("Order")]
+    public virtual ICollection<Food> Food { get; set; } = new List<Food>();
 }

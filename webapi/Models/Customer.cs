@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Customer")]
 public partial class Customer
 {
     [Key]
@@ -18,8 +17,11 @@ public partial class Customer
     [Column("loyality_pts")]
     public int? LoyalityPts { get; set; }
 
-    //[InverseProperty("Customer")]
-    //public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
+    [InverseProperty("Customer")]
+    public virtual ICollection<FoodUser> FoodUser { get; set; } = new List<FoodUser>();
+
+    [InverseProperty("Customer")]
+    public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
 
     [ForeignKey("UserId")]
     [InverseProperty("Customer")]
