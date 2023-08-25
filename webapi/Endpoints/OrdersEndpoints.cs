@@ -28,7 +28,7 @@ public static class OrdersEndpoints
         .WithName("getpendingorders")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<Orders>, NotFound>> (string orderid, MainDatabaseContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Orders>, NotFound>> (Guid orderid, MainDatabaseContext db) =>
         {
             return await db.Orders.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.OrderId == orderid)
@@ -40,7 +40,7 @@ public static class OrdersEndpoints
         .WithOpenApi();
 
         //group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
-        group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (string? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
+        group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (Guid? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
@@ -62,15 +62,13 @@ public static class OrdersEndpoints
         group.MapPost("/", async (Orders orders, MainDatabaseContext db) =>
         {
             // a random id but not unique is generated here
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_*@!$%&^?";
+            // const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_*@!$%&^?";
             var random = new Random();
 
-            orders.OrderId = new string(Enumerable.Repeat(chars, 10)
-                .Select(s => s[random.Next(s.Length)])
-                .ToArray());
+            orders.OrderId = Guid.NewGuid();
             if (orders.ReservationId == null)
             {
-                orders.ReservationId = "no_res_ID";
+                orders.ReservationId = Guid.Empty;
             }
 
             if (orders.Discount != 0)
@@ -89,7 +87,7 @@ public static class OrdersEndpoints
         .WithName("CreateOrders")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (string orderid, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid orderid, MainDatabaseContext db) =>
         {
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
