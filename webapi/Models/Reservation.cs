@@ -11,20 +11,14 @@ namespace webapi.Models;
 [Index("TableNo", Name = "IX_Reservation_tableNo")]
 public partial class Reservation
 {
-    [Key]
-    [Column("reservation_id")]
-    [StringLength(10)]
-    //public string ReservationId { get; set; }
-    public Guid ReservationId { get; set; }
-
     [Column("customer_id")]
     public Guid CustomerId { get; set; }
 
     [Column("staff_id")]
-    public Guid StaffId { get; set; }
+    public Guid? StaffId { get; set; }
 
     [Column("tableNo")]
-    public int TableNo { get; set; }
+    public int? TableNo { get; set; }
 
     [Column("reservation_datetime", TypeName = "datetime")]
     public DateTime? ReservationDatetime { get; set; }
@@ -32,24 +26,22 @@ public partial class Reservation
     [Column("departure", TypeName = "datetime")]
     public DateTime? Departure { get; set; }
 
-    [Required]
-    [Column("actual_departure")]
-    public byte[] ActualDeparture { get; set; }
+    [Key]
+    [Column("reservation_id")]
+    public Guid ReservationId { get; set; }
 
-    //[ForeignKey("CustomerId")]
-    //[InverseProperty("Reservation")]
-    //public virtual Customer Customer { get; set; }
+    [ForeignKey("CustomerId")]
+    [InverseProperty("Reservation")]
+    public virtual Customer Customer { get; set; }
 
-    //uncomment later
+    [InverseProperty("Reservation")]
+    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
 
-    //[InverseProperty("Reservation")]
-    //public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
+    [ForeignKey("StaffId")]
+    [InverseProperty("Reservation")]
+    public virtual Staff Staff { get; set; }
 
-    //[ForeignKey("StaffId")]
-    //[InverseProperty("Reservation")]
-    //public virtual Staff Staff { get; set; }
-
-    //[ForeignKey("TableNo")]
-    //[InverseProperty("Reservation")]
-    //public virtual Table TableNoNavigation { get; set; }
+    [ForeignKey("TableNo")]
+    [InverseProperty("Reservation")]
+    public virtual Table TableNoNavigation { get; set; }
 }

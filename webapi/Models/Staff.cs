@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("Staff")]
 public partial class Staff
 {
     [Key]
@@ -23,6 +22,6 @@ public partial class Staff
     [Column("is_active")]
     public byte? IsActive { get; set; }
 
-    //[InverseProperty("Staff")]
-    //public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
+    [InverseProperty("Staff")]
+    public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
 }

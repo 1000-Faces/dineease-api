@@ -11,34 +11,33 @@ namespace webapi.Models;
 [Index("CategoryId", Name = "IX_Food_categoryID")]
 public partial class Food
 {
-    [Key]
-    [Column("food_id")]
-    public int FoodId { get; set; }
-
     [Required]
     [Column("food_name")]
-    [StringLength(50)]
+    [StringLength(100)]
     [Unicode(false)]
     public string FoodName { get; set; }
 
     [Column("description")]
     public string Description { get; set; }
 
-    [Required]
     [Column("categoryID")]
-    [StringLength(10)]
-    public string CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
-    [Required]
     [Column("food_type")]
     [Unicode(false)]
     public string FoodType { get; set; }
 
-    [Required]
     [Column("availability")]
     [StringLength(50)]
     [Unicode(false)]
     public string Availability { get; set; }
+
+    [Column("price")]
+    public double Price { get; set; }
+
+    [Key]
+    [Column("food_id")]
+    public Guid FoodId { get; set; }
 
     [InverseProperty("Food")]
     public virtual ICollection<CalenderDate> CalenderDate { get; set; } = new List<CalenderDate>();
@@ -48,11 +47,12 @@ public partial class Food
     public virtual FoodCategory Category { get; set; }
 
     [InverseProperty("Food")]
-    public virtual ICollection<Favorites> Favorites { get; set; } = new List<Favorites>();
-
-    [InverseProperty("Food")]
-    public virtual FoodPortions FoodPortions { get; set; }
+    public virtual ICollection<FoodUser> FoodUser { get; set; } = new List<FoodUser>();
 
     [InverseProperty("Food")]
     public virtual ICollection<MealFoods> MealFoods { get; set; } = new List<MealFoods>();
+
+    [ForeignKey("FoodId")]
+    [InverseProperty("Food")]
+    public virtual ICollection<Orders> Order { get; set; } = new List<Orders>();
 }

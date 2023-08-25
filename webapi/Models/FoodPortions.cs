@@ -23,8 +23,4 @@ public partial class FoodPortions
     [Column("large_price")]
     [StringLength(10)]
     public string LargePrice { get; set; }
-
-    [ForeignKey("FoodId")]
-    [InverseProperty("FoodPortions")]
-    public virtual Food Food { get; set; }
 }

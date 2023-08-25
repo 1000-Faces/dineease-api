@@ -13,16 +13,12 @@ public partial class Checkout
 {
     [Key]
     [Column("orderID")]
-    [StringLength(10)]
-    public string OrderId { get; set; }
-    //public Guid OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
-    [Required]
     [Column("staffID")]
     [StringLength(10)]
     public string StaffId { get; set; }
 
-    [Required]
     [Column("paymentMethod")]
     [StringLength(10)]
     public string PaymentMethod { get; set; }
@@ -30,6 +26,9 @@ public partial class Checkout
     [Required]
     [StringLength(10)]
     public string Amount { get; set; }
+
+    [Column("checkoutTime")]
+    public byte[] CheckoutTime { get; set; }
 
     [ForeignKey("OrderId")]
     [InverseProperty("Checkout")]

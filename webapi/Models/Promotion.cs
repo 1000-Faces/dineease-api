@@ -13,23 +13,23 @@ public partial class Promotion
 {
     [Key]
     [Column("promotionID")]
-    [StringLength(10)]
-    public string PromotionId { get; set; }
+    public Guid PromotionId { get; set; }
 
     [Column("discount")]
-    public int Discount { get; set; }
+    public int? Discount { get; set; }
 
-    [Required]
     [Column("description")]
     public string Description { get; set; }
 
     [Column("deadline", TypeName = "date")]
-    public DateTime Deadline { get; set; }
+    public DateTime? Deadline { get; set; }
 
-    [Required]
     [Column("status")]
     [StringLength(50)]
     public string Status { get; set; }
+
+    [InverseProperty("Promotion")]
+    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
 
     [ForeignKey("PromotionId")]
     [InverseProperty("Promotion")]

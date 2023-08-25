@@ -16,13 +16,12 @@ public partial class Table
     public int TableNo { get; set; }
 
     [Column("seating")]
-    [StringLength(10)]
-    public string Seating { get; set; }
+    public int? Seating { get; set; }
 
     [Column("availability")]
-    [StringLength(3)]
+    [StringLength(50)]
     public string Availability { get; set; }
 
-    //[InverseProperty("TableNoNavigation")]
-    //public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
+    [InverseProperty("TableNoNavigation")]
+    public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
 }
