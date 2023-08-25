@@ -12,11 +12,12 @@ public partial class Meal
 {
     [Key]
     [Column("meal_id")]
-    [StringLength(10)]
-    public string MealId { get; set; }
+    public int MealId { get; set; }
 
+    [Required]
     [Column("meal_name")]
-    public int MealName { get; set; }
+    [StringLength(255)]
+    public string MealName { get; set; }
 
     [Column("discription")]
     [Unicode(false)]
@@ -25,8 +26,10 @@ public partial class Meal
     [Column("price")]
     public double Price { get; set; }
 
+    public bool? Custom { get; set; }
+
     [InverseProperty("Meal")]
-    public virtual MealFoods MealFoods { get; set; }
+    public virtual ICollection<MealFoods> MealFoods { get; set; } = new List<MealFoods>();
 
     [ForeignKey("MealId")]
     [InverseProperty("Meal")]

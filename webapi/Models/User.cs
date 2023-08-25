@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[Table("User")]
 [Index("Email", Name = "IX_User", IsUnique = true)]
 public partial class User
 {
