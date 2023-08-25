@@ -40,7 +40,7 @@ public static class OrdersEndpoints
         .WithOpenApi();
 
         //group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
-        group.MapPut("/put", async Task<Results<Ok, NotFound , BadRequest<string>>> (string? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
+        group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (string? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
@@ -68,6 +68,19 @@ public static class OrdersEndpoints
             orders.OrderId = new string(Enumerable.Repeat(chars, 10)
                 .Select(s => s[random.Next(s.Length)])
                 .ToArray());
+            if (orders.ReservationId == null)
+            {
+                orders.ReservationId = "no_res_ID";
+            }
+
+            if (orders.Discount != 0)
+            {
+                orders.Price = orders.Total - orders.Discount;
+            }
+            else
+            {
+                orders.Price = orders.Total;
+            }
 
             db.Orders.Add(orders);
             await db.SaveChangesAsync();
