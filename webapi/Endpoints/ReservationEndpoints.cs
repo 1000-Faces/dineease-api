@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
 using NuGet.Packaging.Signing;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace webapi.Endpoints;
 
@@ -110,35 +112,23 @@ public static class ReservationEndpoints
         .WithName("Update departure time")
         .WithOpenApi();
 
-
-        //group.MapPut("/departure/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
-        //{
-        //    var reservation = await db.Reservation
-        //        .FirstOrDefaultAsync(model => model.ReservationId == reservationid);
-
-        //    if (reservation != null)
-        //    {
-        //        reservation.ActualDeparture = BitConverter.GetBytes(DateTime.Now.Ticks);
-        //        db.Update(reservation);
-        //        await db.SaveChangesAsync();
-        //        return TypedResults.Ok();
-        //    }
-        //    else
-        //    {
-        //        return TypedResults.NotFound();
-        //    }
-        //})
-        //.WithName("UpdateActualDeparture")
-        //.WithOpenApi();
-
-
-
-
+        //makeing a reservation
         group.MapPost("/", async (Reservation reservation, MainDatabaseContext db) =>
         {
             reservation.ReservationId = Guid.NewGuid();
+            var PtsToUpdate = await db.Customer
+                .Where(model => model.UserId == reservation.CustomerId)
+                .Select(model => model.LoyalityPts)
+                .FirstOrDefaultAsync();
+
+            // Find the customer and update Loyality_pts
+            var affected = await db.Customer
+                .Where(model => model.UserId == reservation.CustomerId)
+                .ExecuteUpdateAsync(setters => setters
+                  .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
+                );
             // for dev perposses, res time is set to current date time 
-            // it shold be provided on the post req
+            // it will be provided on the post req
             if (reservation.ReservationDatetime == null)
             {
                 reservation.ReservationDatetime = DateTime.Now.AddHours(1);
@@ -149,12 +139,6 @@ public static class ReservationEndpoints
                 reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
             }
 
-            if (reservation.StaffId == Guid.Empty)
-            {
-                Guid placeholderValue = Guid.Parse("00000000-0000-0000-0000-000000000000");
-                reservation.StaffId = placeholderValue;
-
-            }
             db.Reservation.Add(reservation);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}",reservation);
@@ -172,5 +156,54 @@ public static class ReservationEndpoints
         })
         .WithName("DeleteReservation")
         .WithOpenApi();
+
+        // assigning staff
+        group.MapPut("/update_staff", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
+        {
+            // Get a random active user_id from the Staff table
+            var randomUserId = await db.Staff
+                .Where(staff => staff.IsActive == 1)
+                .OrderBy(_ => Guid.NewGuid())
+                .Select(staff => staff.UserId)
+                .FirstOrDefaultAsync();
+
+            if (randomUserId == default(Guid))
+            {
+                return TypedResults.NotFound(); // No active staff found
+            }
+
+            // Update is_active column in the Staff table for the selected user_id
+            var staffToUpdate = await db.Staff
+                .Where(staff => staff.UserId == randomUserId)
+                .FirstOrDefaultAsync();
+
+            if (staffToUpdate == null)
+            {
+                return TypedResults.NotFound(); // Staff record not found
+            }
+
+            staffToUpdate.IsActive = 0;
+            db.Staff.Update(staffToUpdate);
+
+            // Update staff_id column in the Reservation table for the given reservationid
+            var reservationToUpdate = await db.Reservation
+                .Where(reservation => reservation.ReservationId == reservationid)
+                .FirstOrDefaultAsync();
+
+            if (reservationToUpdate == null)
+            {
+                return TypedResults.NotFound(); // Reservation record not found
+            }
+
+            reservationToUpdate.StaffId = randomUserId;
+            db.Reservation.Update(reservationToUpdate);
+
+            await db.SaveChangesAsync();
+
+            return TypedResults.Ok();
+        })
+        .WithName("Update staff for reservation")
+        .WithOpenApi();
+
     }
 }
