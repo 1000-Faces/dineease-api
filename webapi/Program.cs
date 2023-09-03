@@ -73,4 +73,6 @@ app.MapReservationEndpoints();
 
 app.MapFoodEndpoints();
 
+app.MapPromotionEndpoints();
+
 app.Run();
