@@ -2,6 +2,11 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Xml;
+using Microsoft.Data.SqlClient;
+using static NuGet.Packaging.PackagingConstants;
+
 namespace webapi.Endpoints;
 
 public static class OrdersEndpoints
@@ -39,6 +44,37 @@ public static class OrdersEndpoints
         .WithName("GetOrdersById")
         .WithOpenApi();
 
+        // get foodIDs of a given order
+        group.MapGet("/{orderId}/foods", async (Guid orderId, MainDatabaseContext db) =>
+        {
+            var connectionString = db.Database.GetConnectionString();
+            var sql = $"SELECT food_id FROM Order_Foods WHERE order_id = '{orderId}'";
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    var foodIds = new List<Guid>();
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            if (reader[0] != DBNull.Value)
+                            {
+                                foodIds.Add(reader.GetGuid(0));
+                            }
+                        }
+                    }
+
+                    return TypedResults.Ok(foodIds);
+                }
+            }
+        })
+        .WithName("GetFoodIdsByOrderId")
+        .WithOpenApi();
+
+
         //group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
         group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (Guid? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
@@ -59,16 +95,42 @@ public static class OrdersEndpoints
         .WithName("UpdateOrders")
         .WithOpenApi();
 
-        group.MapPost("/", async (Orders orders, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Created<Orders>, NotFound, BadRequest<string>>> (Orders orders, MainDatabaseContext db) =>
         {
-            // a random id but not unique is generated here
-            // const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_*@!$%&^?";
-            var random = new Random();
+            // Retrieve Reservation Information
+            var reservationInfo = await db.Reservation
+                .Where(r => r.ReservationId == orders.ReservationId)
+                .Select(r => new
+                {
+                    r.ReservationId,
+                    r.StaffId
+                })
+                .FirstOrDefaultAsync();
+
+            if (reservationInfo == null)
+            {
+                return TypedResults.NotFound(); // Return a 404 Not Found response
+            }
+
+            // Check Staff Availability (for now)
+            // better to check with an arrived column
+            if (reservationInfo.StaffId == null)
+            {
+                return TypedResults.BadRequest("Staff is not assigned to this reservation. Cannot create order."); // Return a 400 Bad Request response
+            }
 
             orders.OrderId = Guid.NewGuid();
             if (orders.ReservationId == null)
             {
                 orders.ReservationId = Guid.Empty;
+            }
+            if (orders.Total == 0)
+            {
+                orders.Total = 0;
+            }
+            if (orders.OrderStatus != "pending")
+            {
+                orders.OrderStatus = "pending";
             }
 
             if (orders.Discount != 0)
@@ -86,6 +148,77 @@ public static class OrdersEndpoints
         })
         .WithName("CreateOrders")
         .WithOpenApi();
+
+        group.MapPost("/{orderId}/{foodId}", async (Guid orderId, Guid foodId, MainDatabaseContext db) =>
+        {
+            // Check if the order and food exist
+            var order = await db.Orders.FindAsync(orderId);
+            var food = await db.Food.FindAsync(foodId);
+
+            if (order == null || food == null)
+            {
+                // return TypedResults.NotFound("Order or Food not found.");
+            }
+
+            var sql = $"INSERT INTO Order_Foods (order_id, food_id) VALUES ('{orderId}', '{foodId}')";
+            await db.Database.ExecuteSqlRawAsync(sql);
+
+            //get food price 
+            var food_price = await db.Food
+                             .Where(f => f.FoodId == foodId)
+                             .Select(f => f.Price)
+                             .FirstOrDefaultAsync();
+            // get food total
+            var orderTot = await db.Orders
+                            .Where(o => o.OrderId == orderId)
+                            .Select(o => o.Total)
+                            .FirstOrDefaultAsync();
+            orderTot = orderTot + food_price;
+
+            // update total in orders table
+            var affected = await db.Orders
+                .Where(model => model.OrderId == orderId)
+                .ExecuteUpdateAsync(setters => setters
+                  .SetProperty(m => m.Total, orderTot)
+                );
+
+            //get customer id of the orders
+            var customerinfo = await (from o in db.Orders
+                                join r in db.Reservation on o.ReservationId equals r.ReservationId
+                                where o.OrderId == orderId
+                                select r.CustomerId)
+                                .FirstOrDefaultAsync();
+
+            // Check if a row exists in FoodUser for customerinfo and foodId
+            var existingFoodUser = await db.FoodUser
+                            .Where(fu => fu.CustomerId == customerinfo && fu.FoodId == foodId)
+                            .FirstOrDefaultAsync();
+
+            if (existingFoodUser != null)
+            {
+                // Row exists, increment quantity
+                existingFoodUser.OrderCount += 1;
+            }
+            else
+            {
+                // Row doesn't exist, insert a new row and Set initial quantity to 1
+                var newFoodUser = new FoodUser
+                {
+                    CustomerId = customerinfo,
+                    FoodId = foodId,
+                    OrderCount = 1 
+                };
+                db.FoodUser.Add(newFoodUser);
+            }
+
+            // Save changes to FoodUser table
+            await db.SaveChangesAsync();
+
+            return TypedResults.Ok("Order-Food relationship created successfully.");
+        })
+        .WithName("CreateOrderFoodRelationship")
+        .WithOpenApi();
+
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid orderid, MainDatabaseContext db) =>
         {
