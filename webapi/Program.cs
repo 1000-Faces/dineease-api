@@ -48,6 +48,12 @@ if (builder.Configuration["AllowSwagger"] == "true")
     app.UseSwaggerUI();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+};
+
 app.UseHttpsRedirection();
 
 // add CORS middleware
@@ -64,5 +70,7 @@ app.MapAuthenticationEndpoints();
 app.MapOrdersEndpoints();
 
 app.MapReservationEndpoints();
+
+app.MapFoodEndpoints();
 
 app.Run();
