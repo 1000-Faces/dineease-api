@@ -9,41 +9,67 @@ using webapi.Models;
 
 #nullable disable
 
-namespace webapi.Migrations
+namespace Local.Migrations
 {
     [DbContext(typeof(MainDatabaseContext))]
-    [Migration("20230807054546_ChangeReserveidType")]
-    partial class ChangeReserveidType
+    [Migration("20230904083450_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.9")
+                .HasAnnotation("ProductVersion", "7.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FoodOrders", b =>
+                {
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("FoodId", "OrderId");
+
+                    b.ToTable("FoodOrders");
+                });
+
             modelBuilder.Entity("MealPromotion", b =>
                 {
-                    b.Property<string>("MealId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("meal_id")
-                        .IsFixedLength();
+                    b.Property<int>("MealId")
+                        .HasColumnType("int")
+                        .HasColumnName("meal_id");
 
-                    b.Property<string>("PromotionId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("promotion_id")
-                        .IsFixedLength();
+                    b.Property<Guid>("PromotionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("promotion_id");
 
                     b.HasKey("MealId", "PromotionId");
 
                     b.HasIndex(new[] { "PromotionId" }, "IX_Meal_promotion_promotion_id");
 
                     b.ToTable("Meal_promotion", (string)null);
+                });
+
+            modelBuilder.Entity("OrderFoods", b =>
+                {
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("order_id");
+
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("food_id");
+
+                    b.HasKey("OrderId", "FoodId");
+
+                    b.HasIndex("FoodId");
+
+                    b.ToTable("Order_Foods", (string)null);
                 });
 
             modelBuilder.Entity("webapi.Models.Authentication", b =>
@@ -101,11 +127,15 @@ namespace webapi.Migrations
                         .HasColumnType("date")
                         .HasColumnName("date");
 
-                    b.Property<int?>("FoodId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnName("food_id");
 
-                    b.HasKey("Date");
+                    b.Property<int?>("Quantity")
+                        .HasColumnType("int")
+                        .HasColumnName("quantity");
+
+                    b.HasKey("Date", "FoodId");
 
                     b.HasIndex(new[] { "FoodId" }, "IX_Calender_date_food_id");
 
@@ -114,11 +144,9 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.Checkout", b =>
                 {
-                    b.Property<string>("OrderId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("orderID")
-                        .IsFixedLength();
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("orderID");
 
                     b.Property<string>("Amount")
                         .IsRequired()
@@ -126,15 +154,19 @@ namespace webapi.Migrations
                         .HasColumnType("nchar(10)")
                         .IsFixedLength();
 
+                    b.Property<byte[]>("CheckoutTime")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("checkoutTime");
+
                     b.Property<string>("PaymentMethod")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nchar(10)")
                         .HasColumnName("paymentMethod")
                         .IsFixedLength();
 
                     b.Property<string>("StaffId")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nchar(10)")
                         .HasColumnName("staffID")
@@ -194,31 +226,24 @@ namespace webapi.Migrations
 
                     b.HasIndex(new[] { "FoodId" }, "IX_Favorites_food_id");
 
-                    b.ToTable("Favorites", "userMGT");
+                    b.ToTable("Favorites");
                 });
 
             modelBuilder.Entity("webapi.Models.Food", b =>
                 {
-                    b.Property<int>("FoodId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnName("food_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FoodId"));
-
                     b.Property<string>("Availability")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .IsUnicode(false)
                         .HasColumnType("varchar(50)")
                         .HasColumnName("availability");
 
-                    b.Property<string>("CategoryId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("categoryID")
-                        .IsFixedLength();
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int")
+                        .HasColumnName("categoryID");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)")
@@ -226,16 +251,19 @@ namespace webapi.Migrations
 
                     b.Property<string>("FoodName")
                         .IsRequired()
-                        .HasMaxLength(50)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("food_name");
 
                     b.Property<string>("FoodType")
-                        .IsRequired()
                         .IsUnicode(false)
                         .HasColumnType("varchar(max)")
                         .HasColumnName("food_type");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float")
+                        .HasColumnName("price");
 
                     b.HasKey("FoodId");
 
@@ -246,18 +274,19 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.FoodCategory", b =>
                 {
-                    b.Property<string>("CategoryId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("categoryID")
-                        .IsFixedLength();
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("categoryID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nchar(50)")
-                        .HasColumnName("categoryName")
-                        .IsFixedLength();
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("categoryName");
 
                     b.HasKey("CategoryId")
                         .HasName("PK_foodCategory");
@@ -290,13 +319,19 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.FoodUser", b =>
                 {
-                    b.Property<int>("FoodId")
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CustomerID");
+
+                    b.Property<int?>("OrderCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.HasKey("FoodId", "CustomerId");
 
-                    b.HasKey("FoodId", "UserId");
+                    b.HasIndex("CustomerId");
 
                     b.ToTable("FoodUser");
                 });
@@ -327,19 +362,27 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.Meal", b =>
                 {
-                    b.Property<string>("MealId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("meal_id")
-                        .IsFixedLength();
+                    b.Property<int>("MealId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("meal_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealId"));
+
+                    b.Property<bool?>("Custom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValueSql("((1))");
 
                     b.Property<string>("Discription")
                         .IsUnicode(false)
                         .HasColumnType("varchar(max)")
                         .HasColumnName("discription");
 
-                    b.Property<int>("MealName")
-                        .HasColumnType("int")
+                    b.Property<string>("MealName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("meal_name");
 
                     b.Property<double>("Price")
@@ -353,25 +396,23 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.MealFoods", b =>
                 {
-                    b.Property<string>("MealId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("meal_id")
-                        .IsFixedLength();
-
-                    b.Property<int>("FoodId")
+                    b.Property<int>("MealId")
                         .HasColumnType("int")
+                        .HasColumnName("meal_id");
+
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnName("food_id");
 
-                    b.Property<int>("Quantity1")
+                    b.Property<int>("Quantity")
                         .HasColumnType("int")
-                        .HasColumnName("quantity1");
+                        .HasColumnName("quantity");
 
-                    b.Property<double>("UnitPrice")
+                    b.Property<double>("TotalPrice")
                         .HasColumnType("float")
-                        .HasColumnName("unit_price");
+                        .HasColumnName("total_price");
 
-                    b.HasKey("MealId")
+                    b.HasKey("MealId", "FoodId")
                         .HasName("PK_Meal_foods_1");
 
                     b.HasIndex(new[] { "FoodId" }, "IX_Meal_foods_food_id");
@@ -381,13 +422,11 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.Orders", b =>
                 {
-                    b.Property<string>("OrderId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("order_id")
-                        .IsFixedLength();
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("order_id");
 
-                    b.Property<double>("Discount")
+                    b.Property<double?>("Discount")
                         .HasColumnType("float")
                         .HasColumnName("discount");
 
@@ -398,22 +437,25 @@ namespace webapi.Migrations
                         .HasColumnName("order_status")
                         .IsFixedLength();
 
-                    b.Property<double>("Price")
+                    b.Property<double?>("Price")
                         .HasColumnType("float")
                         .HasColumnName("price");
 
-                    b.Property<string>("ReservationId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("reservation_id")
-                        .IsFixedLength();
+                    b.Property<Guid?>("PromotionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("promotionID");
+
+                    b.Property<Guid?>("ReservationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("reservation_id");
 
                     b.Property<double>("Total")
                         .HasColumnType("float")
                         .HasColumnName("total");
 
                     b.HasKey("OrderId");
+
+                    b.HasIndex("PromotionId");
 
                     b.HasIndex(new[] { "ReservationId" }, "IX_orders_reservation_id");
 
@@ -422,27 +464,23 @@ namespace webapi.Migrations
 
             modelBuilder.Entity("webapi.Models.Promotion", b =>
                 {
-                    b.Property<string>("PromotionId")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("promotionID")
-                        .IsFixedLength();
+                    b.Property<Guid>("PromotionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("promotionID");
 
-                    b.Property<DateTime>("Deadline")
+                    b.Property<DateTime?>("Deadline")
                         .HasColumnType("date")
                         .HasColumnName("deadline");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
-                    b.Property<int>("Discount")
+                    b.Property<int?>("Discount")
                         .HasColumnType("int")
                         .HasColumnName("discount");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("status");
@@ -455,16 +493,8 @@ namespace webapi.Migrations
             modelBuilder.Entity("webapi.Models.Reservation", b =>
                 {
                     b.Property<Guid>("ReservationId")
-                        .HasMaxLength(10)
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("reservation_id");
-
-                    b.Property<byte[]>("ActualDeparture")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion")
-                        .HasColumnName("actual_departure");
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uniqueidentifier")
@@ -478,15 +508,19 @@ namespace webapi.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("reservation_datetime");
 
-                    b.Property<Guid>("StaffId")
+                    b.Property<Guid?>("StaffId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("staff_id");
 
-                    b.Property<int>("TableNo")
+                    b.Property<int?>("TableNo")
                         .HasColumnType("int")
                         .HasColumnName("tableNo");
 
                     b.HasKey("ReservationId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("StaffId");
 
                     b.HasIndex(new[] { "TableNo" }, "IX_Reservation_tableNo");
 
@@ -569,16 +603,13 @@ namespace webapi.Migrations
                         .HasColumnName("tableNo");
 
                     b.Property<string>("Availability")
-                        .HasMaxLength(3)
-                        .HasColumnType("nchar(3)")
-                        .HasColumnName("availability")
-                        .IsFixedLength();
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("availability");
 
-                    b.Property<string>("Seating")
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .HasColumnName("seating")
-                        .IsFixedLength();
+                    b.Property<int?>("Seating")
+                        .HasColumnType("int")
+                        .HasColumnName("seating");
 
                     b.HasKey("TableNo");
 
@@ -660,6 +691,21 @@ namespace webapi.Migrations
                         .HasConstraintName("FK_Meal_promotion_promotion");
                 });
 
+            modelBuilder.Entity("OrderFoods", b =>
+                {
+                    b.HasOne("webapi.Models.Food", null)
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Order_Foods_Food");
+
+                    b.HasOne("webapi.Models.Orders", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Order_Foods_orders");
+                });
+
             modelBuilder.Entity("webapi.Models.Authentication", b =>
                 {
                     b.HasOne("webapi.Models.Role", "RoleNavigation")
@@ -683,6 +729,7 @@ namespace webapi.Migrations
                     b.HasOne("webapi.Models.Food", "Food")
                         .WithMany("CalenderDate")
                         .HasForeignKey("FoodId")
+                        .IsRequired()
                         .HasConstraintName("FK_Calender_date_Food");
 
                     b.Navigation("Food");
@@ -694,7 +741,7 @@ namespace webapi.Migrations
                         .WithOne("Checkout")
                         .HasForeignKey("webapi.Models.Checkout", "OrderId")
                         .IsRequired()
-                        .HasConstraintName("FK_checkout_orders");
+                        .HasConstraintName("FK_checkout_orders1");
 
                     b.Navigation("Order");
                 });
@@ -710,36 +757,31 @@ namespace webapi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("webapi.Models.Favorites", b =>
-                {
-                    b.HasOne("webapi.Models.Food", "Food")
-                        .WithMany("Favorites")
-                        .HasForeignKey("FoodId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Favorites_Food");
-
-                    b.Navigation("Food");
-                });
-
             modelBuilder.Entity("webapi.Models.Food", b =>
                 {
                     b.HasOne("webapi.Models.FoodCategory", "Category")
                         .WithMany("Food")
                         .HasForeignKey("CategoryId")
-                        .IsRequired()
                         .HasConstraintName("FK_Food_FoodCategory");
 
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("webapi.Models.FoodPortions", b =>
+            modelBuilder.Entity("webapi.Models.FoodUser", b =>
                 {
-                    b.HasOne("webapi.Models.Food", "Food")
-                        .WithOne("FoodPortions")
-                        .HasForeignKey("webapi.Models.FoodPortions", "FoodId")
+                    b.HasOne("webapi.Models.Customer", "Customer")
+                        .WithMany("FoodUser")
+                        .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK_Food_portions_Food");
+                        .HasConstraintName("FK_FoodUser_Customer");
+
+                    b.HasOne("webapi.Models.Food", "Food")
+                        .WithMany("FoodUser")
+                        .HasForeignKey("FoodId")
+                        .IsRequired()
+                        .HasConstraintName("FK_FoodUser_Food");
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Food");
                 });
@@ -753,8 +795,8 @@ namespace webapi.Migrations
                         .HasConstraintName("FK_Meal_foods_Food");
 
                     b.HasOne("webapi.Models.Meal", "Meal")
-                        .WithOne("MealFoods")
-                        .HasForeignKey("webapi.Models.MealFoods", "MealId")
+                        .WithMany("MealFoods")
+                        .HasForeignKey("MealId")
                         .IsRequired()
                         .HasConstraintName("FK_Meal_foods_Meal");
 
@@ -763,13 +805,60 @@ namespace webapi.Migrations
                     b.Navigation("Meal");
                 });
 
+            modelBuilder.Entity("webapi.Models.Orders", b =>
+                {
+                    b.HasOne("webapi.Models.Promotion", "Promotion")
+                        .WithMany("Orders")
+                        .HasForeignKey("PromotionId")
+                        .HasConstraintName("FK_orders_promotion");
+
+                    b.HasOne("webapi.Models.Reservation", "Reservation")
+                        .WithMany("Orders")
+                        .HasForeignKey("ReservationId")
+                        .HasConstraintName("FK_orders_Reservation");
+
+                    b.Navigation("Promotion");
+
+                    b.Navigation("Reservation");
+                });
+
+            modelBuilder.Entity("webapi.Models.Reservation", b =>
+                {
+                    b.HasOne("webapi.Models.Customer", "Customer")
+                        .WithMany("Reservation")
+                        .HasForeignKey("CustomerId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Reservation_Customer");
+
+                    b.HasOne("webapi.Models.Staff", "Staff")
+                        .WithMany("Reservation")
+                        .HasForeignKey("StaffId")
+                        .HasConstraintName("FK_Reservation_Staff");
+
+                    b.HasOne("webapi.Models.Table", "TableNoNavigation")
+                        .WithMany("Reservation")
+                        .HasForeignKey("TableNo")
+                        .HasConstraintName("FK_Reservation_table");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("TableNoNavigation");
+                });
+
+            modelBuilder.Entity("webapi.Models.Customer", b =>
+                {
+                    b.Navigation("FoodUser");
+
+                    b.Navigation("Reservation");
+                });
+
             modelBuilder.Entity("webapi.Models.Food", b =>
                 {
                     b.Navigation("CalenderDate");
 
-                    b.Navigation("Favorites");
-
-                    b.Navigation("FoodPortions");
+                    b.Navigation("FoodUser");
 
                     b.Navigation("MealFoods");
                 });
@@ -789,9 +878,29 @@ namespace webapi.Migrations
                     b.Navigation("Checkout");
                 });
 
+            modelBuilder.Entity("webapi.Models.Promotion", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("webapi.Models.Reservation", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("webapi.Models.Role", b =>
                 {
                     b.Navigation("Authentication");
+                });
+
+            modelBuilder.Entity("webapi.Models.Staff", b =>
+                {
+                    b.Navigation("Reservation");
+                });
+
+            modelBuilder.Entity("webapi.Models.Table", b =>
+                {
+                    b.Navigation("Reservation");
                 });
 
             modelBuilder.Entity("webapi.Models.User", b =>
