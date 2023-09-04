@@ -1,15 +1,10 @@
 {
   "dependencies": {
-    "secrets1": {
-      "type": "secrets.user"
-    },
-    "mssql1": {
-      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ServiceLinker/locations/southeastasia/connectors/AzureSQLDatabase_AE45C17E09",
+    "mssql3": {
+      "serviceConnectorResourceId": "",
       "secretStore": "LocalSecretsFile",
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/dineease/databases/MainDatabase",
-      "type": "mssql.azure",
-      "connectionId": "AzureSQLDatabase",
-      "dynamicId": null
+      "type": "mssql.onprem",
+      "connectionId": "ConnectionStrings:MainDatabase2"
     }
   }
 }

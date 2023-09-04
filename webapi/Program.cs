@@ -34,7 +34,7 @@ builder.Services.AddSwaggerGen();
 
 // Configure db context with the connection string
 builder.Services.AddDbContext<MainDatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQLDatabase")));
+    options.UseSqlServer(builder.Configuration["ConnectionStrings:MainDatabase"]));
 
 // -------------------- Services --------------------
 
