@@ -5,6 +5,7 @@ using webapi.Models;
 using NuGet.Packaging.Signing;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using static NuGet.Packaging.PackagingConstants;
 
 namespace webapi.Endpoints;
 
@@ -127,6 +128,7 @@ public static class ReservationEndpoints
                 .ExecuteUpdateAsync(setters => setters
                   .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
                 );
+
             // for dev perposses, res time is set to current date time 
             // it will be provided on the post req
             if (reservation.ReservationDatetime == null)
@@ -146,12 +148,47 @@ public static class ReservationEndpoints
         .WithName("CreateReservation")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound, BadRequest>> (Guid reservationid, MainDatabaseContext db) =>
         {
+            // Retrieve Reservation Information
+            var reservationInfo = await db.Reservation
+                .Where(r => r.ReservationId == reservationid)
+                .Select(r => new
+                {
+                    r.CustomerId,
+                    r.StaffId
+                })
+                .FirstOrDefaultAsync();
+
+            if (reservationInfo == null)
+            {
+                return TypedResults.NotFound(); // Return a 404 Not Found response
+            }
+
+            // Check Staff Availability (for now)
+            // better to check with an arrived column
+            if (reservationInfo.StaffId == null)
+            {
+                return TypedResults.BadRequest(); // Return a 400 Bad Request response
+            }
+
+            var PtsToUpdate = await db.Customer
+                .Where(model => model.UserId == reservationInfo.CustomerId)
+                .Select(model => model.LoyalityPts)
+                .FirstOrDefaultAsync();
+
+            // Find the customer and update Loyality_pts
+            var affectedCustomer = await db.Customer
+                .Where(model => model.UserId == reservationInfo.CustomerId)
+                .ExecuteUpdateAsync(setters => setters
+                  .SetProperty(m => m.LoyalityPts, PtsToUpdate - 10)
+                );
+
             var affected = await db.Reservation
                 .Where(model => model.ReservationId == reservationid)
                 .ExecuteDeleteAsync();
 
+            await db.SaveChangesAsync();
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
         })
         .WithName("DeleteReservation")
