@@ -45,7 +45,7 @@ public static class OrdersEndpoints
         .WithOpenApi();
 
         // get foodIDs of a given order
-        group.MapGet("/{orderId}/foods", async (Guid orderId, MainDatabaseContext db) =>
+        group.MapGet("/order_food", async (Guid orderId, MainDatabaseContext db) =>
         {
             var connectionString = db.Database.GetConnectionString();
             var sql = $"SELECT food_id FROM Order_Foods WHERE order_id = '{orderId}'";
@@ -74,8 +74,7 @@ public static class OrdersEndpoints
         .WithName("GetFoodIdsByOrderId")
         .WithOpenApi();
 
-
-        //group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
+        // updating order status
         group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (Guid? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
             var affected = await db.Orders
@@ -149,7 +148,8 @@ public static class OrdersEndpoints
         .WithName("CreateOrders")
         .WithOpenApi();
 
-        group.MapPost("/{orderId}/{foodId}", async (Guid orderId, Guid foodId, MainDatabaseContext db) =>
+        // adding food to an order
+        group.MapPost("/order_food", async Task<Results<Ok<string>, NotFound<string>>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
         {
             // Check if the order and food exist
             var order = await db.Orders.FindAsync(orderId);
@@ -157,7 +157,7 @@ public static class OrdersEndpoints
 
             if (order == null || food == null)
             {
-                // return TypedResults.NotFound("Order or Food not found.");
+                return TypedResults.NotFound("Order or Food not found.");
             }
 
             var sql = $"INSERT INTO Order_Foods (order_id, food_id) VALUES ('{orderId}', '{foodId}')";
@@ -219,9 +219,27 @@ public static class OrdersEndpoints
         .WithName("CreateOrderFoodRelationship")
         .WithOpenApi();
 
-
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid orderid, MainDatabaseContext db) =>
+        //delete an order
+        group.MapDelete("/{id}", async Task<Results<Ok, BadRequest, NotFound>> (Guid orderid, MainDatabaseContext db) =>
         {
+            var order = await db.Orders.FindAsync(orderid);
+            if (order == null)
+            {
+                return TypedResults.NotFound();
+            }
+            // Check if the order status is "pending"
+            if (order.OrderStatus != "pending")
+            {
+                return TypedResults.BadRequest();
+            }
+
+            // to 1st delete from OrderFood table 
+            // SQL DELETE statement
+            var sql = $"DELETE FROM Order_Foods WHERE order_id = '{orderid}'";
+
+            // Execute the DELETE statement on OrderFood table
+            await db.Database.ExecuteSqlRawAsync(sql);
+
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
                 .ExecuteDeleteAsync();
@@ -230,5 +248,36 @@ public static class OrdersEndpoints
         })
         .WithName("DeleteOrders")
         .WithOpenApi();
+
+        // delete food from an order
+        group.MapDelete("/{orderId}/{foodId}", async Task<Results<Ok<string>,BadRequest, NotFound>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
+        {
+            // Check if the order and food exist
+            var order = await db.Orders.FindAsync(orderId);
+            var food = await db.Food.FindAsync(foodId);
+
+            if (order == null || food == null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            // Check if the order status is "pending"
+            if (order.OrderStatus != "pending")
+            {
+                return TypedResults.BadRequest();
+            }
+
+            // SQL DELETE statement
+            var sql = $"DELETE FROM Order_Foods WHERE order_id = '{orderId}' AND food_id = '{foodId}'";
+
+            // Execute the DELETE statement
+            await db.Database.ExecuteSqlRawAsync(sql);
+
+            return TypedResults.Ok("Order-Food relationship deleted successfully.");
+        })
+        .WithName("DeleteOrderFoodRelationship")
+        .WithOpenApi();
+
     }
+
 }
