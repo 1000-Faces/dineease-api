@@ -75,7 +75,8 @@ app.MapFoodEndpoints();
 
 app.MapPromotionEndpoints();
 
-
 app.MapMealEndpoints();
+
+app.MapTableEndpoints();
 
 app.Run();

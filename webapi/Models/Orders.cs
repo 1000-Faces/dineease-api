@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("orders")]
+[Index("PromotionId", Name = "IX_orders_promotionID")]
 [Index("ReservationId", Name = "IX_orders_reservation_id")]
 public partial class Orders
 {
