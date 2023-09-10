@@ -31,6 +31,8 @@ public partial class MainDatabaseContext : DbContext
 
     public virtual DbSet<FoodCategory> FoodCategory { get; set; }
 
+    public virtual DbSet<FoodOrders> FoodOrders { get; set; }
+
     public virtual DbSet<FoodPortions> FoodPortions { get; set; }
 
     public virtual DbSet<FoodUser> FoodUser { get; set; }
@@ -203,6 +205,7 @@ public partial class MainDatabaseContext : DbContext
                     {
                         j.HasKey("OrderId", "FoodId");
                         j.ToTable("Order_Foods");
+                        j.HasIndex(new[] { "FoodId" }, "IX_Order_Foods_food_id");
                         j.IndexerProperty<Guid>("OrderId").HasColumnName("order_id");
                         j.IndexerProperty<Guid>("FoodId").HasColumnName("food_id");
                     });

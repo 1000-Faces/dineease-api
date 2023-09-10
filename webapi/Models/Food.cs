@@ -11,6 +11,10 @@ namespace webapi.Models;
 [Index("CategoryId", Name = "IX_Food_categoryID")]
 public partial class Food
 {
+    [Key]
+    [Column("food_id")]
+    public Guid FoodId { get; set; }
+
     [Required]
     [Column("food_name")]
     [StringLength(100)]
@@ -34,10 +38,6 @@ public partial class Food
 
     [Column("price")]
     public double Price { get; set; }
-
-    [Key]
-    [Column("food_id")]
-    public Guid FoodId { get; set; }
 
     [InverseProperty("Food")]
     public virtual ICollection<CalenderDate> CalenderDate { get; set; } = new List<CalenderDate>();
