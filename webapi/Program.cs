@@ -79,4 +79,8 @@ app.MapMealEndpoints();
 
 app.MapTableEndpoints();
 
+app.MapChatEndpoints();
+
+app.MapStaffEndpoints();
+
 app.Run();
