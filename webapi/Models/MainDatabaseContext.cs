@@ -19,6 +19,8 @@ public partial class MainDatabaseContext : DbContext
 
     public virtual DbSet<CalenderDate> CalenderDate { get; set; }
 
+    public virtual DbSet<Chat> Chat { get; set; }
+
     public virtual DbSet<Checkout> Checkout { get; set; }
 
     public virtual DbSet<Customer> Customer { get; set; }
@@ -30,8 +32,6 @@ public partial class MainDatabaseContext : DbContext
     public virtual DbSet<Food> Food { get; set; }
 
     public virtual DbSet<FoodCategory> FoodCategory { get; set; }
-
-    public virtual DbSet<FoodOrders> FoodOrders { get; set; }
 
     public virtual DbSet<FoodPortions> FoodPortions { get; set; }
 
@@ -83,6 +83,14 @@ public partial class MainDatabaseContext : DbContext
                 .HasConstraintName("FK_Calender_date_Food");
         });
 
+        modelBuilder.Entity<Chat>(entity =>
+        {
+            entity.Property(e => e.MessageId).ValueGeneratedNever();
+            entity.Property(e => e.Timestamp)
+                .IsRowVersion()
+                .IsConcurrencyToken();
+        });
+
         modelBuilder.Entity<Checkout>(entity =>
         {
             entity.Property(e => e.OrderId).ValueGeneratedNever();
@@ -114,6 +122,22 @@ public partial class MainDatabaseContext : DbContext
             entity.Property(e => e.FoodId).ValueGeneratedNever();
 
             entity.HasOne(d => d.Category).WithMany(p => p.Food).HasConstraintName("FK_Food_FoodCategory");
+
+            entity.HasMany(d => d.Order).WithMany(p => p.Food)
+                .UsingEntity<Dictionary<string, object>>(
+                    "FoodOrders",
+                    r => r.HasOne<Orders>().WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_FoodOrders_orders"),
+                    l => l.HasOne<Food>().WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_FoodOrders_Food"),
+                    j =>
+                    {
+                        j.HasKey("FoodId", "OrderId");
+                    });
         });
 
         modelBuilder.Entity<FoodCategory>(entity =>
@@ -190,7 +214,7 @@ public partial class MainDatabaseContext : DbContext
 
             entity.HasOne(d => d.Reservation).WithMany(p => p.Orders).HasConstraintName("FK_orders_Reservation");
 
-            entity.HasMany(d => d.Food).WithMany(p => p.Order)
+            entity.HasMany(d => d.FoodNavigation).WithMany(p => p.OrderNavigation)
                 .UsingEntity<Dictionary<string, object>>(
                     "OrderFoods",
                     r => r.HasOne<Food>().WithMany()

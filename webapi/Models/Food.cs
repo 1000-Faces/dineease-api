@@ -55,4 +55,8 @@ public partial class Food
     [ForeignKey("FoodId")]
     [InverseProperty("Food")]
     public virtual ICollection<Orders> Order { get; set; } = new List<Orders>();
+
+    [ForeignKey("FoodId")]
+    [InverseProperty("FoodNavigation")]
+    public virtual ICollection<Orders> OrderNavigation { get; set; } = new List<Orders>();
 }
