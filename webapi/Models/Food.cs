@@ -2,9 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace webapi.Models;
 
@@ -39,6 +41,14 @@ public partial class Food
     [Column("price")]
     public double Price { get; set; }
 
+    [Column("foodImg")]
+    [Unicode(false)]
+    public string FoodImg { get; set; }
+
+    [NotMapped] // This property is not mapped to the database
+    [DisplayName("Upload Image")]
+    public IFormFile ImageFile { get; set; } // Used IFormFile for file uploads
+
     [InverseProperty("Food")]
     public virtual ICollection<CalenderDate> CalenderDate { get; set; } = new List<CalenderDate>();
 
@@ -52,11 +62,6 @@ public partial class Food
     [InverseProperty("Food")]
     public virtual ICollection<MealFoods> MealFoods { get; set; } = new List<MealFoods>();
 
-    [ForeignKey("FoodId")]
     [InverseProperty("Food")]
-    public virtual ICollection<Orders> Order { get; set; } = new List<Orders>();
-
-    [ForeignKey("FoodId")]
-    [InverseProperty("FoodNavigation")]
-    public virtual ICollection<Orders> OrderNavigation { get; set; } = new List<Orders>();
+    public virtual ICollection<OrderFoods> OrderFoods { get; set; } = new List<OrderFoods>();
 }

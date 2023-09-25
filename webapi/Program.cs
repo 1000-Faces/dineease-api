@@ -1,8 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 using webapi.Models;
 using webapi;
 using webapi.Endpoints;
 using Microsoft.Extensions.Options;
+using Stripe;
+using Microsoft.AspNetCore.Builder;
 
 // var _allowSpecificOrigins = "_dineEaseSpecificOriginsPolicy";
 
@@ -59,6 +62,8 @@ app.UseHttpsRedirection();
 // add CORS middleware
 app.UseCors(); // this is the default policy
 
+StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
+
 app.UseAuthorization();
 
 app.MapControllers();
@@ -72,15 +77,19 @@ app.MapOrdersEndpoints();
 app.MapReservationEndpoints();
 
 app.MapFoodEndpoints();
+//var foodEndpoints = new FoodEndpoints(app.Environment);
+//foodEndpoints.MapEndpoints(app.MapGet("/"));
 
 app.MapPromotionEndpoints();
-
-app.MapMealEndpoints();
 
 app.MapTableEndpoints();
 
 app.MapChatEndpoints();
 
 app.MapStaffEndpoints();
+
+app.MapMealEndpoints();
+
+app.MapCheckoutEndpoints();
 
 app.Run();

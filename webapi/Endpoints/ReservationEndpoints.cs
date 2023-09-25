@@ -1,11 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
 using NuGet.Packaging.Signing;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using static NuGet.Packaging.PackagingConstants;
+using Stripe.Checkout;
+using Stripe;
+using Azure;
 
 namespace webapi.Endpoints;
 
@@ -47,25 +51,6 @@ public static class ReservationEndpoints
         .WithName("GetReservationById")
         .WithOpenApi();
 
-        //group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, Reservation reservation, MainDatabaseContext db) =>
-        //{
-        //    var affected = await db.Reservation
-        //        .Where(model => model.ReservationId == reservationid)
-        //        .ExecuteUpdateAsync(setters => setters
-        //          //.SetProperty(m => m.ReservationId, reservation.ReservationId)
-        //          //.SetProperty(m => m.CustomerId, reservation.CustomerId)
-        //          //.SetProperty(m => m.StaffId, reservation.StaffId)
-        //          .SetProperty(m => m.TableNo, reservation.TableNo)
-        //          .SetProperty(m => m.ReservationDatetime, reservation.ReservationDatetime)
-        //          .SetProperty(m => m.Departure, reservation.Departure)
-        //          // connot update a time stamp column
-        //          //.SetProperty(m => m.ActualDeparture, reservation.ActualDeparture)
-        //        );
-
-        //    return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-        //})
-        //.WithName("UpdateReservation")
-        //.WithOpenApi();
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid reservationid, Reservation reservation, MainDatabaseContext db) =>
         {
@@ -114,36 +99,96 @@ public static class ReservationEndpoints
         .WithOpenApi();
 
         //makeing a reservation
-        group.MapPost("/", async (Reservation reservation, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Created<Reservation>, BadRequest<string>>> (Reservation reservation, MainDatabaseContext db) =>
         {
-            reservation.ReservationId = Guid.NewGuid();
-            var PtsToUpdate = await db.Customer
-                .Where(model => model.UserId == reservation.CustomerId)
-                .Select(model => model.LoyalityPts)
-                .FirstOrDefaultAsync();
-
-            // Find the customer and update Loyality_pts
-            var affected = await db.Customer
-                .Where(model => model.UserId == reservation.CustomerId)
-                .ExecuteUpdateAsync(setters => setters
-                  .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
-                );
-
-            // for dev perposses, res time is set to current date time 
-            // it will be provided on the post req
-            if (reservation.ReservationDatetime == null)
+            try
             {
-                reservation.ReservationDatetime = DateTime.Now.AddHours(1);
-                reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
-            }
-            else
-            {
-                reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
-            }
+                reservation.ReservationId = Guid.NewGuid();
+                var PtsToUpdate = await db.Customer
+                    .Where(model => model.UserId == reservation.CustomerId)
+                    .Select(model => model.LoyalityPts)
+                    .FirstOrDefaultAsync();
 
-            db.Reservation.Add(reservation);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}",reservation);
+                // Find the customer and update Loyality_pts
+                var affected = await db.Customer
+                    .Where(model => model.UserId == reservation.CustomerId)
+                    .ExecuteUpdateAsync(setters => setters
+                      .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
+                    );
+
+                // for dev perposses, res time is set to current date time 
+                // it will be provided on the post req
+                if (reservation.ReservationDatetime == null)
+                    {
+                        reservation.ReservationDatetime = DateTime.Now.AddHours(1);
+                        reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
+                    }
+                else
+                    {
+                        reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
+                    }
+
+                // Stripe payments start
+
+                var domain = "https://localhost:7251/";
+
+                var options = new SessionCreateOptions
+                {
+                    SuccessUrl=domain+$"confirmCheckout",
+                    CancelUrl = domain+$"cancelCheckout",
+                    LineItems=new List<SessionLineItemOptions>(),
+                    Mode = "payment",
+                };
+
+                var sessionListItem = new SessionLineItemOptions
+                {
+                    PriceData = new SessionLineItemPriceDataOptions()
+                    {
+                        UnitAmount = 1000,
+                        Currency = "inr",
+                        ProductData = new SessionLineItemPriceDataProductDataOptions()
+                        {
+                            Name = "reservation"
+                        }
+                    },
+                    Quantity = 1
+                };
+                options.LineItems.Add(sessionListItem);
+
+                var service = new SessionService();
+                Session session = service.Create(options);
+
+                // Set the redirect URL in the response headers
+                //httpContextAccessor.HttpContext.Response.Headers.Add("Location", session.Url);
+
+                //Response.Headers.Add("Location",session.Url);
+                //return StatusCodeResult(303);
+
+                // Check if the payment was successful (you may need to confirm the payment)
+                if (session.Status == "succeeded")
+                {
+                    db.Reservation.Add(reservation);
+                    await db.SaveChangesAsync();
+                    return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
+                }
+                else
+                {
+                    // Handling payment failure
+                    return TypedResults.BadRequest("Payment failed. Please try again.");
+                }
+
+                // Stripe payments end
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions (e.g., database errors)
+                return TypedResults.BadRequest("An error occurred while processing your reservation.");
+            }
+            // Stripe payments end
+
+            //db.Reservation.Add(reservation);
+            //await db.SaveChangesAsync();
+            //return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}",reservation);
         })
         .WithName("CreateReservation")
         .WithOpenApi();
