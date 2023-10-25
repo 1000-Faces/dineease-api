@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 webapi/efpt.config.json
+
+# Screts json files
+webapi/[Dd]ata/secrets.json

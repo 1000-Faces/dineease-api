@@ -3,52 +3,25 @@ using webapi.Models;
 using webapi;
 using webapi.Endpoints;
 using Microsoft.Extensions.Options;
-
-// var _allowSpecificOrigins = "_dineEaseSpecificOriginsPolicy";
+using webapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Services --------------------
-// enabling CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(
-               builder =>
-               {
-                   // adding wildcard to allow any origin
-                   builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-               });
-
-    //options.AddPolicy(_allowSpecificOrigins,
-    //    builder =>
-    //    {
-    //        // adding wildcard to allow any origin
-    //        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    //    });
-});
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Configure db context with the connection string
-builder.Services.AddDbContext<MainDatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration["ConnectionStrings:MainDatabase"]));
-
-// -------------------- Services --------------------
+// loading services
+ConfigManager configManager = new(builder);
+configManager.ConfigureServices();
+configManager.ConfigDBConnection();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
 if (builder.Configuration["AllowSwagger"] == "true")
 {
+    // Forcing swagger to be enabled in production
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-if (app.Environment.IsDevelopment())
+else if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -57,12 +30,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // add CORS middleware
-app.UseCors(); // this is the default policy
+app.UseCors(); // this is for the default policy
 
 app.UseAuthorization();
 
 app.MapControllers();
 
+// -------------------- Endpoints --------------------
 app.MapUserEndpoints();
 
 app.MapAuthenticationEndpoints();
@@ -82,5 +56,6 @@ app.MapTableEndpoints();
 app.MapChatEndpoints();
 
 app.MapStaffEndpoints();
+// -------------------- Endpoints --------------------
 
 app.Run();
