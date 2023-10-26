@@ -1,16 +1,21 @@
 using webapi.Endpoints;
-using Stripe;
 using webapi.Services;
+using Stripe;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // loading services
 ConfigManager configManager = new(builder);
+
 // loading the custom secret file
 SecretFile secretFile = new("dbconnections");
+
 configManager.AddConfiguration(secretFile.Load());
+
 // connecting to the database
 configManager.ConfigureDBConnection("MainDatabase");
+
 
 var app = configManager.GetApp();
 
@@ -38,8 +43,6 @@ app.MapOrdersEndpoints();
 app.MapReservationEndpoints();
 
 app.MapFoodEndpoints();
-//var foodEndpoints = new FoodEndpoints(app.Environment);
-//foodEndpoints.MapEndpoints(app.MapGet("/"));
 
 app.MapPromotionEndpoints();
 
@@ -48,10 +51,11 @@ app.MapTableEndpoints();
 app.MapChatEndpoints();
 
 app.MapStaffEndpoints();
-// -------------------- Endpoints --------------------
 
 app.MapMealEndpoints();
 
 app.MapCheckoutEndpoints();
+
+// -------------------- Endpoints --------------------
 
 app.Run();
