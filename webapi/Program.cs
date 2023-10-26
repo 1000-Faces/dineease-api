@@ -1,4 +1,5 @@
-﻿using webapi.Endpoints;
+using webapi.Endpoints;
+using Stripe;
 using webapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,8 @@ app.UseHttpsRedirection();
 // add CORS middleware
 app.UseCors(); // this is for the default policy
 
+StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
+
 app.UseAuthorization();
 
 app.MapControllers();
@@ -35,10 +38,10 @@ app.MapOrdersEndpoints();
 app.MapReservationEndpoints();
 
 app.MapFoodEndpoints();
+//var foodEndpoints = new FoodEndpoints(app.Environment);
+//foodEndpoints.MapEndpoints(app.MapGet("/"));
 
 app.MapPromotionEndpoints();
-
-app.MapMealEndpoints();
 
 app.MapTableEndpoints();
 
@@ -46,5 +49,9 @@ app.MapChatEndpoints();
 
 app.MapStaffEndpoints();
 // -------------------- Endpoints --------------------
+
+app.MapMealEndpoints();
+
+app.MapCheckoutEndpoints();
 
 app.Run();

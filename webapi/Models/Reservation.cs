@@ -32,6 +32,10 @@ public partial class Reservation
     [Column("departure", TypeName = "datetime")]
     public DateTime? Departure { get; set; }
 
+    [Column("status")]
+    [StringLength(50)]
+    public string Status { get; set; }
+
     [ForeignKey("CustomerId")]
     [InverseProperty("Reservation")]
     public virtual Customer Customer { get; set; }
