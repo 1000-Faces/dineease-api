@@ -1,31 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
-using webapi.Models;
-using webapi;
-using webapi.Endpoints;
-using Microsoft.Extensions.Options;
+﻿using webapi.Endpoints;
 using webapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // loading services
 ConfigManager configManager = new(builder);
-configManager.ConfigureServices();
-configManager.ConfigDBConnection();
+// loading the custom secret file
+SecretFile secretFile = new("dbconnections");
+configManager.AddConfiguration(secretFile.Load());
+// connecting to the database
+configManager.ConfigureDBConnection("ConnectionStrings:MainDatabase");
 
-var app = builder.Build();
+var app = configManager.GetApp();
 
 // Configure the HTTP request pipeline.
-if (builder.Configuration["AllowSwagger"] == "true")
-{
-    // Forcing swagger to be enabled in production
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-};
+configManager.AllowSwaggerUI();
 
 app.UseHttpsRedirection();
 

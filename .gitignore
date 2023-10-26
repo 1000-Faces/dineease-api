@@ -364,4 +364,4 @@ FodyWeavers.xsd
 webapi/efpt.config.json
 
 # Screts json files
-webapi/[Dd]ata/secrets.json
+webapi/[Dd]ata/*-secret.json
