@@ -31,7 +31,7 @@ public partial class Orders
 
     [Required]
     [Column("order_status")]
-    [StringLength(10)]
+    [StringLength(50)]
     public string OrderStatus { get; set; }
 
     [Column("promotionID")]
@@ -40,6 +40,12 @@ public partial class Orders
     [InverseProperty("Order")]
     public virtual Checkout Checkout { get; set; }
 
+    [InverseProperty("Order")]
+    public virtual ICollection<OrderFoods> OrderFoods { get; set; } = new List<OrderFoods>();
+
+    [InverseProperty("Order")]
+    public virtual ICollection<OrderMeal> OrderMeal { get; set; } = new List<OrderMeal>();
+
     [ForeignKey("PromotionId")]
     [InverseProperty("Orders")]
     public virtual Promotion Promotion { get; set; }
@@ -47,12 +53,4 @@ public partial class Orders
     [ForeignKey("ReservationId")]
     [InverseProperty("Orders")]
     public virtual Reservation Reservation { get; set; }
-
-    [ForeignKey("OrderId")]
-    [InverseProperty("Order")]
-    public virtual ICollection<Food> Food { get; set; } = new List<Food>();
-
-    [ForeignKey("OrderId")]
-    [InverseProperty("OrderNavigation")]
-    public virtual ICollection<Food> FoodNavigation { get; set; } = new List<Food>();
 }

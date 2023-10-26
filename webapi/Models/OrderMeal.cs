@@ -8,30 +8,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
-[PrimaryKey("MealId", "FoodId")]
-[Table("Meal_foods")]
-[Index("FoodId", Name = "IX_Meal_foods_food_id")]
-public partial class MealFoods
+[PrimaryKey("OrderId", "MealId")]
+[Table("Order_Meal")]
+public partial class OrderMeal
 {
+    [Key]
+    [Column("order_id")]
+    public Guid OrderId { get; set; }
+
     [Key]
     [Column("meal_id")]
     public Guid MealId { get; set; }
 
-    [Key]
-    [Column("food_id")]
-    public Guid FoodId { get; set; }
-
     [Column("quantity")]
     public int? Quantity { get; set; }
 
-    [Column("total_price")]
-    public double? TotalPrice { get; set; }
-
-    [ForeignKey("FoodId")]
-    [InverseProperty("MealFoods")]
-    public virtual Food Food { get; set; }
-
     [ForeignKey("MealId")]
-    [InverseProperty("MealFoods")]
+    [InverseProperty("OrderMeal")]
     public virtual Meal Meal { get; set; }
+
+    [ForeignKey("OrderId")]
+    [InverseProperty("OrderMeal")]
+    public virtual Orders Order { get; set; }
 }
