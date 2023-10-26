@@ -1,6 +1,5 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 
 namespace webapi.Services
 {
@@ -10,7 +9,6 @@ namespace webapi.Services
 
         const int HASH_LENGTH = 32; // SHA-256 hash size
         const int KEY_LENGTH = 32; // Key size. Use 16 for 128-bit encryption, 24 for 192-bit and 32 for 256-bit encryption
-        const int IV_LENGTH = 16; // IV size. Use 16 for 128-bit encryption, 24 for 192-bit and 32 for 256-bit encryption
 
         public string SecretName { get; private set; }
         public string SecretPath => Path.Combine(dataFolder, $"{SecretName}.bin");
@@ -21,18 +19,6 @@ namespace webapi.Services
         {
             dataFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
             SecretName = secretName;
-        }
-
-        public void Save(IConfiguration config)
-        {
-            // serialize the configuration object to JSON
-            string configData = JsonSerializer.Serialize(config.GetChildren(), new JsonSerializerOptions { WriteIndented = true });
-
-            // encrypt the secret
-            EncryptSecret(configData);
-
-            // replace the build JSON file with the new configurations
-            File.WriteAllText(SecretBuilderPath, configData);
         }
 
         public IConfiguration Load()
@@ -55,53 +41,24 @@ namespace webapi.Services
             return config;
         }
 
-        private (byte[], byte[], byte[]) ReadLockFile()
-        {
-            // Read the stored hash, key and iv from the lock file
-            byte[] storedHash, storedKey, storedIV;
-            using BinaryReader reader = new(File.OpenRead(LockPath));
-            storedHash = reader.ReadBytes(HASH_LENGTH);
-            storedKey = reader.ReadBytes(KEY_LENGTH);
-            storedIV = reader.ReadBytes(IV_LENGTH);
-
-            return (storedHash, storedKey, storedIV);
-        }
-
-        private bool IsBuildJsonMismatch()
+        public void EncryptSecret()
         {
             if (File.Exists(SecretBuilderPath))
             {
-                // Compute the hash of the current build JSON file
-                byte[] buildJsonHash = SHA256.HashData(File.ReadAllBytes(SecretBuilderPath));
+                // Genereate a new random key
+                var key = Aes.Create().Key;
 
-                if (File.Exists(LockPath))
-                {
-                    // get data from the lock file
-                    byte[] storedHash;
-                    (storedHash, _, _) = ReadLockFile();
+                // Read the build JSON file
+                string dataString = File.ReadAllText(SecretBuilderPath);
 
-                    // Compare the current hash with the stored hash
-                    bool isSameHash = buildJsonHash.SequenceEqual(storedHash);
-
-                    // If the hashes are the same, return false (not a new build)
-                    if (isSameHash)
-                        return false;
-                }
-
-                // If the file doesn't exist or the hashes don't match, it's a new build
-                return true;
-            }
-
-            // If the build JSON file doesn't exist, it's not a new build
-            return false;
-        }
-
-        private void EncryptSecret()
-        {
-            if (File.Exists(SecretBuilderPath))
-            {
                 // Encrypt the secret using the build JSON file
-                EncryptSecret(File.ReadAllText(SecretBuilderPath));
+                string encyptedString = EncryptString(dataString, key);
+
+                // Save the encrypted secret to the secret file
+                File.WriteAllText(SecretPath, encyptedString);
+
+                // Save the lock file
+                SaveLockFile(dataString, key);
             }
             else
             {
@@ -110,22 +67,74 @@ namespace webapi.Services
             }
         }
 
-        private void EncryptSecret(string configData)
+        public static string EncryptString(string dataString, byte[] key)
         {
-            byte[] dataStream = Encoding.UTF8.GetBytes(configData);
+            if (string.IsNullOrWhiteSpace(dataString)) return dataString;  // There is no need to encrypt null/empty or already encrypted text
 
-            // A new key and IV is automatically created when you create a new instance of one of the managed symmetric cryptographic classes
-            // using the parameterless Create() method.
-            // https://learn.microsoft.com/en-us/dotnet/standard/security/generating-keys-for-encryption-and-decryption
-            using Aes aesAlg = Aes.Create();
+            // Create a new random vector.
+            var iv = Aes.Create().IV;
 
-            // Create an encryptor to perform the stream transform
-            using ICryptoTransform encryptor = aesAlg.CreateEncryptor();
-            using MemoryStream input = new(dataStream);
-            using FileStream output = new(SecretPath, FileMode.Create, FileAccess.Write);
-            using CryptoStream cryptoStream = new(output, encryptor, CryptoStreamMode.Write);
+            string encryptedStr = Convert.ToBase64String(Encrypt(dataString, key, iv));
 
-            input.CopyTo(cryptoStream);
+            // Mearge encrypted string and IV as base64 string
+            return Convert.ToBase64String(iv) + ";" + encryptedStr;
+        }
+
+        public string DecryptSecret()
+        {
+            if (File.Exists(SecretPath) && File.Exists(LockPath))
+            {
+                // get data from the lock file
+                byte[] storedHash, storedKey;
+                (storedHash, storedKey) = ReadLockFile();
+
+                // Read the secret file
+                string dataString = File.ReadAllText(SecretPath);
+
+                // Decrypt the secret
+                string decryptedString = DecryptString(dataString, storedKey);
+
+                // validate the integrity of the decrypted secret
+                if (ValidateIntegrity(Encoding.UTF8.GetBytes(decryptedString), storedHash))
+                {
+                    // return the decrypted secret
+                    return decryptedString;
+                }
+
+                // Handle the case where the decrypted secret is corrupted
+                throw new CryptographicException("Secret file is corrupted.");
+            }
+
+            // Handle the case where the encrypted file or lock file is missing or corrupted
+            throw new FileNotFoundException("Secret file or lock file not found.");
+        }
+
+        public static string DecryptString(string dataString, byte[] key)
+        {
+            if (string.IsNullOrWhiteSpace(dataString)) return dataString;  // There is no need to encrypt null/empty or already encrypted text
+
+            // Parse the vector from the encrypted data.
+            byte[] vector = Convert.FromBase64String(dataString.Split(';')[0]);
+
+            // Decrypt and return the plain string
+            return Decrypt(Convert.FromBase64String(dataString.Split(';')[1]), key, vector);
+        }
+
+        private (byte[], byte[]) ReadLockFile()
+        {
+            // Read the stored hash, key and iv from the lock file
+            byte[] storedHash, storedKey;
+            using BinaryReader reader = new(File.OpenRead(LockPath));
+            storedHash = reader.ReadBytes(HASH_LENGTH);
+            storedKey = reader.ReadBytes(KEY_LENGTH);
+
+            return (storedHash, storedKey);
+        }
+
+        private void SaveLockFile(string data, byte[] key)
+        {
+            // Create the lock file
+            byte[] dataStream = Encoding.UTF8.GetBytes(data);
 
             // Save the key and hash of the config data in the lock file
             byte[] configHash;
@@ -133,37 +142,70 @@ namespace webapi.Services
 
             using BinaryWriter writer = new(File.Open(LockPath, FileMode.Create));
             writer.Write(configHash);
-            writer.Write(aesAlg.Key);
-            writer.Write(aesAlg.IV);
+            writer.Write(key);
         }
 
-        private string DecryptSecret()
+        private bool IsBuildJsonMismatch()
         {
-            if (File.Exists(SecretPath) && File.Exists(LockPath))
+            if (File.Exists(SecretBuilderPath) && File.Exists(LockPath))
             {
-                // get data from the lock file
-                byte[] storedKey, storedIV;
-                (_, storedKey, storedIV) = ReadLockFile();
+                // Read the stored hash from the lock file
+                byte[] storedHash;
+                (storedHash, _) = ReadLockFile();
 
-                // Create an Aes object
-                using Aes aesAlg = Aes.Create();
-
-                // Create a decryptor to perform the stream transform
-                using ICryptoTransform decryptor = aesAlg.CreateDecryptor(storedKey, storedIV);
-
-                // Create the streams used for decryption
-                using FileStream input = new(SecretPath, FileMode.Open, FileAccess.Read);
-                using MemoryStream output = new();
-                using CryptoStream csDecrypt = new(output, decryptor, CryptoStreamMode.Write);
-                
-                input.CopyTo(csDecrypt);
-
-                // Decryption successful, return the decrypted data
-                return Encoding.UTF8.GetString(output.ToArray());
+                return !ValidateIntegrity(Encoding.UTF8.GetBytes(File.ReadAllText(SecretBuilderPath)), storedHash);
             }
 
-            // Handle the case where the encrypted file or lock file is missing or corrupted
-            throw new FileNotFoundException("Secret file or lock file not found.");
+            // If the build JSON file doesn't exist, it's not a new build
+            return true;
+        }
+
+        private static bool ValidateIntegrity(byte[] datastream, byte[] storedHash)
+        {
+            // Compute the hash of the datastream
+            byte[] buildJsonHash = SHA256.HashData(datastream);
+
+            // Compare the current hash with the stored hash
+            return buildJsonHash.SequenceEqual(storedHash);
+        }
+
+        private static byte[] Encrypt(string plainText, byte[] key, byte[] vector)
+        {
+            // A new key and IV is automatically created when you create a new instance of one of the managed symmetric cryptographic classes
+            // using the parameterless Create() method.
+            // https://learn.microsoft.com/en-us/dotnet/standard/security/generating-keys-for-encryption-and-decryption
+            using Aes aesAlg = Aes.Create();
+
+            // Create an encryptor to perform the stream transform
+            using ICryptoTransform encryptor = aesAlg.CreateEncryptor(key, vector);
+
+            using MemoryStream output = new();
+            using CryptoStream cryptoStream = new(output, encryptor, CryptoStreamMode.Write);
+            using StreamWriter streamWriter = new(cryptoStream);
+
+            // Write the plain text to the StreamWriter
+            streamWriter.Write(plainText);
+
+            // Close the StreamWriter to flush and write the data to the CryptoStream
+            streamWriter.Close();
+
+            return output.ToArray();
+        }
+
+        private static string Decrypt(byte[] encriptedBytes, byte[] key, byte[] vector)
+        {
+            // Create an Aes object
+            using Aes aesAlg = Aes.Create();
+
+            // Create a decryptor to perform the stream transform
+            using ICryptoTransform decryptor = aesAlg.CreateDecryptor(key, vector);
+
+            // Create the streams used for decryption
+            using MemoryStream input = new(encriptedBytes);
+            using CryptoStream cryptoStream = new(input, decryptor, CryptoStreamMode.Read);
+            using StreamReader streamReader = new(cryptoStream);
+
+            return streamReader.ReadToEnd();
         }
     }
 }

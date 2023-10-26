@@ -9,7 +9,7 @@ ConfigManager configManager = new(builder);
 SecretFile secretFile = new("dbconnections");
 configManager.AddConfiguration(secretFile.Load());
 // connecting to the database
-configManager.ConfigureDBConnection("ConnectionStrings:MainDatabase");
+configManager.ConfigureDBConnection("MainDatabase");
 
 var app = configManager.GetApp();
 
