@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [Table("orders")]
+[Index("PromotionId", Name = "IX_orders_promotionID")]
 [Index("ReservationId", Name = "IX_orders_reservation_id")]
 public partial class Orders
 {
@@ -50,4 +51,8 @@ public partial class Orders
     [ForeignKey("OrderId")]
     [InverseProperty("Order")]
     public virtual ICollection<Food> Food { get; set; } = new List<Food>();
+
+    [ForeignKey("OrderId")]
+    [InverseProperty("OrderNavigation")]
+    public virtual ICollection<Food> FoodNavigation { get; set; } = new List<Food>();
 }

@@ -8,9 +8,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapi.Models;
 
+[Index("CustomerId", Name = "IX_Reservation_customer_id")]
+[Index("StaffId", Name = "IX_Reservation_staff_id")]
 [Index("TableNo", Name = "IX_Reservation_tableNo")]
 public partial class Reservation
 {
+    [Key]
+    [Column("reservation_id")]
+    public Guid ReservationId { get; set; }
+
     [Column("customer_id")]
     public Guid CustomerId { get; set; }
 
@@ -25,10 +31,6 @@ public partial class Reservation
 
     [Column("departure", TypeName = "datetime")]
     public DateTime? Departure { get; set; }
-
-    [Key]
-    [Column("reservation_id")]
-    public Guid ReservationId { get; set; }
 
     [ForeignKey("CustomerId")]
     [InverseProperty("Reservation")]
