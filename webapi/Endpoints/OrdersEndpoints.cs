@@ -44,35 +44,57 @@ public static class OrdersEndpoints
         .WithName("GetOrdersById")
         .WithOpenApi();
 
-        // get foodIDs of a given order
-        group.MapGet("/order_food", async (Guid orderId, MainDatabaseContext db) =>
+        // get food details of a given order
+        group.MapGet("/order_details", async (Guid orderId, MainDatabaseContext db) =>
         {
-            var connectionString = db.Database.GetConnectionString();
-            var sql = $"SELECT food_id FROM Order_Foods WHERE order_id = '{orderId}'";
-
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using (var command = new SqlCommand(sql, connection))
+            // Fetch food items for the order
+            var foodItems = await db.OrderFoods
+                .Where(of => of.OrderId == orderId)
+                .Select(of => new
                 {
-                    var foodIds = new List<Guid>();
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            if (reader[0] != DBNull.Value)
-                            {
-                                foodIds.Add(reader.GetGuid(0));
-                            }
-                        }
-                    }
+                    FoodId = of.Food.FoodId,
+                    FoodName = of.Food.FoodName,
+                    Description = of.Food.Description,
+                    Price = of.Food.Price,
+                    Quantity = of.Quantity
+                })
+                .ToListAsync();
 
-                    return TypedResults.Ok(foodIds);
-                }
-            }
+            // Fetch meals for the order
+            var meals = await db.OrderMeal
+                .Where(om => om.OrderId == orderId)
+                .Select(om => new
+                {
+                    MealId = om.Meal.MealId,
+                    MealName = om.Meal.MealName,
+                    Quantity = om.Quantity,
+                    Food = db.MealFoods
+                        .Where(mf => mf.MealId == om.MealId)
+                        .Select(mf => new
+                        {
+                            FoodId = mf.Food.FoodId,
+                            FoodName = mf.Food.FoodName,
+                            Description = mf.Food.Description,
+                            Price = mf.Food.Price,
+                            Quantity = mf.Quantity
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            var response = new
+            {
+                FoodItems = foodItems,
+                Meals = meals
+            };
+
+            return TypedResults.Ok(response);
         })
-        .WithName("GetFoodIdsByOrderId")
+        .WithName("GetOrderDetails")
         .WithOpenApi();
+
+
+
 
         // updating order status
         group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (Guid? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
@@ -149,7 +171,7 @@ public static class OrdersEndpoints
         .WithOpenApi();
 
         // adding food to an order
-        group.MapPost("/order_food", async Task<Results<Ok<string>, NotFound<string>>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
+        group.MapPost("/order_food", async Task<Results<Ok<string>,BadRequest<string>, NotFound<string>>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
         {
             // Check if the order and food exist
             var order = await db.Orders.FindAsync(orderId);
@@ -158,6 +180,12 @@ public static class OrdersEndpoints
             if (order == null || food == null)
             {
                 return TypedResults.NotFound("Order or Food not found.");
+            }
+
+            // Check if the order status is "pending"
+            if (order.OrderStatus != "pending")
+            {
+                return TypedResults.BadRequest("Order is accepted");
             }
 
             var sql = $"INSERT INTO Order_Foods (order_id, food_id) VALUES ('{orderId}', '{foodId}')";
@@ -250,11 +278,13 @@ public static class OrdersEndpoints
         .WithOpenApi();
 
         // delete food from an order
-        group.MapDelete("/{orderId}/{foodId}", async Task<Results<Ok<string>,BadRequest, NotFound>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
+        group.MapDelete("/{orderId}/{foodId}", async Task<Results<Ok<string>,BadRequest<string>, NotFound>> (Guid orderId, Guid foodId, MainDatabaseContext db) =>
         {
             // Check if the order and food exist
             var order = await db.Orders.FindAsync(orderId);
             var food = await db.Food.FindAsync(foodId);
+
+            
 
             if (order == null || food == null)
             {
@@ -264,7 +294,7 @@ public static class OrdersEndpoints
             // Check if the order status is "pending"
             if (order.OrderStatus != "pending")
             {
-                return TypedResults.BadRequest();
+                return TypedResults.BadRequest("Order is accepted");
             }
 
             // SQL DELETE statement

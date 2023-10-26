@@ -17,7 +17,7 @@ public static class MealEndpoints
         .WithName("GetAllMeals")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<Meal>, NotFound>> (int mealid, MainDatabaseContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Meal>, NotFound>> (Guid mealid, MainDatabaseContext db) =>
         {
             return await db.Meal.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.MealId == mealid)
@@ -28,7 +28,7 @@ public static class MealEndpoints
         .WithName("GetMealById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int mealid, Meal meal, MainDatabaseContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid mealid, Meal meal, MainDatabaseContext db) =>
         {
             var affected = await db.Meal
                 .Where(model => model.MealId == mealid)
@@ -47,6 +47,7 @@ public static class MealEndpoints
 
         group.MapPost("/", async (Meal meal, MainDatabaseContext db) =>
         {
+            meal.MealId = Guid.NewGuid();
             db.Meal.Add(meal);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/api/Meal/{meal.MealId}",meal);
@@ -54,7 +55,7 @@ public static class MealEndpoints
         .WithName("CreateMeal")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int mealid, MainDatabaseContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid mealid, MainDatabaseContext db) =>
         {
             var affected = await db.Meal
                 .Where(model => model.MealId == mealid)
