@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using webapi.Services;
 using NuGet.Packaging.Signing;
 using System.Text.Json.Serialization;
 using System.Text.Json;
@@ -21,7 +22,9 @@ public static class ReservationEndpoints
 
         group.MapGet("/", async (MainDatabaseContext db) =>
         {
-            return await db.Reservation.ToListAsync();
+            return await db.Reservation
+            .Where(r => r.Status != "opened")
+            .ToListAsync();
         })
         .WithName("GetAllReservations")
         .WithOpenApi();
@@ -31,12 +34,36 @@ public static class ReservationEndpoints
             DateTime today = DateTime.Now.Date; // Get today's date without the time
 
             var reservations = await db.Reservation
-                .Where(r => r.Departure.HasValue && r.Departure.Value > DateTime.Now && r.Departure.Value.Date == today)
+                .Where(r => (r.Departure.HasValue && r.Departure.Value > DateTime.Now && r.Departure.Value.Date == today) && 
+                            r.Status != "opened")
                 .ToListAsync();
 
             return reservations;
         })
         .WithName("GetReservationsForToday")
+        .WithOpenApi();
+
+        // provides the reservations overlapping a given time
+        // used to fine all occupied tables
+        group.MapGet("/SelectedTime", async Task<Results<Ok<List<Reservation>>, NotFound>> (DateTime reservationDatetime, DateTime departure, MainDatabaseContext db) =>
+        {
+            DateTime today = DateTime.Now.Date; // Get today's date without the time
+
+            var reservations = await db.Reservation
+            .Where(r => r.ReservationDatetime.HasValue && r.ReservationDatetime.Value.Date == reservationDatetime.Date && 
+            ( (r.ReservationDatetime <= reservationDatetime && r.Departure >= reservationDatetime ) ||
+            (r.ReservationDatetime <= departure && r.Departure >= departure) ) )
+            .ToListAsync();
+
+            if ( reservations.Count > 0)
+            {
+                return TypedResults.Ok(reservations);
+            }
+
+            return TypedResults.NotFound();
+            
+        })
+        .WithName("GetReservationsSelectedTime")
         .WithOpenApi();
 
         //group.MapGet("/{id}", async Task<Results<Ok<Reservation>, NotFound>> (string reservationid, MainDatabaseContext db) =>
@@ -99,10 +126,28 @@ public static class ReservationEndpoints
         .WithOpenApi();
 
         //makeing a reservation
-        group.MapPost("/", async Task<Results<Created<Reservation>, BadRequest<string>>> (Reservation reservation, MainDatabaseContext db) =>
+        //group.MapPost("/", async Task<Results<Created<Reservation>, BadRequest<string>>> (Reservation reservation, MainDatabaseContext db) =>
+        group.MapPost("/", async (Reservation reservation, MainDatabaseContext db) =>
         {
+            // Task<IResult, Results<Ok, Created<Reservation> , NotFound<string>, BadRequest<string>, BadRequest<Exception>>> 
             try
             {
+                // Check for reservation overlap
+                var overlappingReservation = await db.Reservation
+                    .Where(r => r.ReservationDatetime.HasValue && reservation.ReservationDatetime.HasValue && 
+                                r.ReservationDatetime.Value.Date == reservation.ReservationDatetime.Value.Date &&
+                                r.TableNo == reservation.TableNo &&
+                                ((r.ReservationDatetime <= reservation.ReservationDatetime && r.Departure >= reservation.ReservationDatetime) ||
+                                (r.ReservationDatetime <= reservation.Departure && r.Departure >= reservation.Departure)))
+                    .Select(r => r.ReservationId)
+                    .FirstOrDefaultAsync();
+
+                if (overlappingReservation != Guid.Empty)
+                {
+                    // There is an overlap with existing reservation(s)
+                    return TypedResults.BadRequest("This table is being processed. Please chose another Table");
+                }
+
                 reservation.ReservationId = Guid.NewGuid();
                 var PtsToUpdate = await db.Customer
                     .Where(model => model.UserId == reservation.CustomerId)
@@ -113,20 +158,24 @@ public static class ReservationEndpoints
                 var affected = await db.Customer
                     .Where(model => model.UserId == reservation.CustomerId)
                     .ExecuteUpdateAsync(setters => setters
-                      .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
+                        .SetProperty(m => m.LoyalityPts, PtsToUpdate + 10)
                     );
 
                 // for dev perposses, res time is set to current date time 
                 // it will be provided on the post req
                 if (reservation.ReservationDatetime == null)
-                    {
-                        reservation.ReservationDatetime = DateTime.Now.AddHours(1);
-                        reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
-                    }
+                {
+                    reservation.ReservationDatetime = DateTime.Now.AddHours(1);
+                    reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
+                }
                 else
-                    {
-                        reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
-                    }
+                {
+                    reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
+                }
+
+                //db.Reservation.Add(reservation);
+                //await db.SaveChangesAsync();
+                //return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
 
                 // Stripe payments start
 
@@ -134,11 +183,12 @@ public static class ReservationEndpoints
 
                 var options = new SessionCreateOptions
                 {
-                    SuccessUrl=domain+$"confirmCheckout",
-                    CancelUrl = domain+$"cancelCheckout",
-                    LineItems=new List<SessionLineItemOptions>(),
+                    SuccessUrl = domain + $"confirmcheckout",
+                    CancelUrl = domain + $"cancelcheckout",
+                    LineItems = new List<SessionLineItemOptions>(),
                     Mode = "payment",
                 };
+
 
                 var sessionListItem = new SessionLineItemOptions
                 {
@@ -158,31 +208,22 @@ public static class ReservationEndpoints
                 var service = new SessionService();
                 Session session = service.Create(options);
 
+                //// Perform the redirect by setting the "Location" header
+                var redirectUrl = session.Url;
+                return TypedResults.Ok(redirectUrl);
+                return Results.Redirect(redirectUrl);
                 // Set the redirect URL in the response headers
-                //httpContextAccessor.HttpContext.Response.Headers.Add("Location", session.Url);
+                // Response.Headers.Add("Location", session.Url);
+                // to do : redirect to the session.Url from within the endpoint
 
-                //Response.Headers.Add("Location",session.Url);
-                //return StatusCodeResult(303);
+                
+                return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
 
-                // Check if the payment was successful (you may need to confirm the payment)
-                if (session.Status == "succeeded")
-                {
-                    db.Reservation.Add(reservation);
-                    await db.SaveChangesAsync();
-                    return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
-                }
-                else
-                {
-                    // Handling payment failure
-                    return TypedResults.BadRequest("Payment failed. Please try again.");
-                }
-
-                // Stripe payments end
             }
             catch (Exception ex)
             {
                 // Handle other exceptions (e.g., database errors)
-                return TypedResults.BadRequest("An error occurred while processing your reservation.");
+                return TypedResults.BadRequest(ex);
             }
             // Stripe payments end
 
@@ -193,6 +234,7 @@ public static class ReservationEndpoints
         .WithName("CreateReservation")
         .WithOpenApi();
 
+        // deleting a reervation by reservationID
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound, BadRequest>> (Guid reservationid, MainDatabaseContext db) =>
         {
             // Retrieve Reservation Information
