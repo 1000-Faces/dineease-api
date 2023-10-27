@@ -24,7 +24,7 @@ namespace webapi.Services
         public IConfiguration Load()
         {
             // check if it's a new build
-            if (IsBuildJsonMismatch())
+            if (IsNewBuild())
             {
                 // if it's a new build, encrypt the secret
                 EncryptSecret();
@@ -145,19 +145,33 @@ namespace webapi.Services
             writer.Write(key);
         }
 
-        private bool IsBuildJsonMismatch()
+        private bool IsNewBuild()
         {
-            if (File.Exists(SecretBuilderPath) && File.Exists(LockPath))
+            if (File.Exists(SecretBuilderPath))
             {
-                // Read the stored hash from the lock file
-                byte[] storedHash;
-                (storedHash, _) = ReadLockFile();
+                if (File.Exists(LockPath))
+                {
+                    // Read the stored hash from the lock file
+                    byte[] storedHash;
+                    (storedHash, _) = ReadLockFile();
 
-                return !ValidateIntegrity(Encoding.UTF8.GetBytes(File.ReadAllText(SecretBuilderPath)), storedHash);
+                    // Check the integrity of the build JSON file
+                    return !ValidateIntegrity(Encoding.UTF8.GetBytes(File.ReadAllText(SecretBuilderPath)), storedHash);
+                }
+                else
+                {
+                    // If the lock file doesn't exist, it's a new build
+                    return true;
+                }
             }
-
-            // If the build JSON file doesn't exist, it's not a new build
-            return true;
+            else if (File.Exists(SecretPath) && File.Exists(LockPath))
+            {
+                // If the build JSON file doesn't exist, it's not a new build
+                return false;
+            }
+            
+            // there should be an error. It should be exist ether the build JSON file or the secret file (bin & lock files)
+            throw new FileNotFoundException("Build JSON file or secret file not found.");
         }
 
         private static bool ValidateIntegrity(byte[] datastream, byte[] storedHash)
