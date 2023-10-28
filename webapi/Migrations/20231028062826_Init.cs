@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Local.Migrations
+namespace webapi.Migrations
 {
     /// <inheritdoc />
     public partial class Init : Migration
@@ -20,6 +20,22 @@ namespace Local.Migrations
                 },
                 constraints: table =>
                 {
+                });
+
+            migrationBuilder.CreateTable(
+                name: "chat",
+                columns: table => new
+                {
+                    MessageID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SenderID = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ReceiverID = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false),
+                    DateTime = table.Column<DateTime>(type: "datetime", nullable: true),
+                    Message = table.Column<string>(type: "varchar(max)", unicode: false, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_chat", x => x.MessageID);
                 });
 
             migrationBuilder.CreateTable(
@@ -73,18 +89,6 @@ namespace Local.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FoodOrders",
-                columns: table => new
-                {
-                    FoodId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FoodOrders", x => new { x.FoodId, x.OrderId });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Inventory",
                 columns: table => new
                 {
@@ -109,12 +113,11 @@ namespace Local.Migrations
                 name: "Meal",
                 columns: table => new
                 {
-                    meal_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    meal_name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    meal_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    meal_name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     discription = table.Column<string>(type: "varchar(max)", unicode: false, nullable: true),
                     price = table.Column<double>(type: "float", nullable: false),
-                    Custom = table.Column<bool>(type: "bit", nullable: true, defaultValueSql: "((1))")
+                    Custom = table.Column<bool>(type: "bit", nullable: true, defaultValueSql: "((0))")
                 },
                 constraints: table =>
                 {
@@ -226,7 +229,8 @@ namespace Local.Migrations
                     categoryID = table.Column<int>(type: "int", nullable: true),
                     food_type = table.Column<string>(type: "varchar(max)", unicode: false, nullable: true),
                     availability = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
-                    price = table.Column<double>(type: "float", nullable: false)
+                    price = table.Column<double>(type: "float", nullable: false),
+                    foodImg = table.Column<string>(type: "varchar(max)", unicode: false, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -242,7 +246,7 @@ namespace Local.Migrations
                 name: "Meal_promotion",
                 columns: table => new
                 {
-                    meal_id = table.Column<int>(type: "int", nullable: false),
+                    meal_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     promotion_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
@@ -325,10 +329,10 @@ namespace Local.Migrations
                 name: "Meal_foods",
                 columns: table => new
                 {
-                    meal_id = table.Column<int>(type: "int", nullable: false),
+                    meal_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     food_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    quantity = table.Column<int>(type: "int", nullable: false),
-                    total_price = table.Column<double>(type: "float", nullable: false)
+                    quantity = table.Column<int>(type: "int", nullable: true, defaultValueSql: "((1))"),
+                    total_price = table.Column<double>(type: "float", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -377,7 +381,8 @@ namespace Local.Migrations
                     staff_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     tableNo = table.Column<int>(type: "int", nullable: true),
                     reservation_datetime = table.Column<DateTime>(type: "datetime", nullable: true),
-                    departure = table.Column<DateTime>(type: "datetime", nullable: true)
+                    departure = table.Column<DateTime>(type: "datetime", nullable: true),
+                    status = table.Column<string>(type: "nchar(50)", fixedLength: true, maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -408,7 +413,7 @@ namespace Local.Migrations
                     total = table.Column<double>(type: "float", nullable: false),
                     discount = table.Column<double>(type: "float", nullable: true),
                     price = table.Column<double>(type: "float", nullable: true),
-                    order_status = table.Column<string>(type: "nchar(10)", fixedLength: true, maxLength: 10, nullable: false),
+                    order_status = table.Column<string>(type: "nchar(50)", fixedLength: true, maxLength: 50, nullable: false, defaultValueSql: "(N'pending')"),
                     promotionID = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
@@ -432,7 +437,7 @@ namespace Local.Migrations
                 {
                     orderID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     staffID = table.Column<string>(type: "nchar(10)", fixedLength: true, maxLength: 10, nullable: true),
-                    paymentMethod = table.Column<string>(type: "nchar(10)", fixedLength: true, maxLength: 10, nullable: true),
+                    paymentMethod = table.Column<string>(type: "nchar(10)", fixedLength: true, maxLength: 10, nullable: true, defaultValueSql: "(N'cash')"),
                     Amount = table.Column<string>(type: "nchar(10)", fixedLength: true, maxLength: 10, nullable: false),
                     checkoutTime = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
@@ -451,7 +456,8 @@ namespace Local.Migrations
                 columns: table => new
                 {
                     order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    food_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    food_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    quantity = table.Column<int>(type: "int", nullable: true, defaultValueSql: "((1))")
                 },
                 constraints: table =>
                 {
@@ -463,6 +469,29 @@ namespace Local.Migrations
                         principalColumn: "food_id");
                     table.ForeignKey(
                         name: "FK_Order_Foods_orders",
+                        column: x => x.order_id,
+                        principalTable: "orders",
+                        principalColumn: "order_id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Order_Meal",
+                columns: table => new
+                {
+                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    meal_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    quantity = table.Column<int>(type: "int", nullable: true, defaultValueSql: "((1))")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Order_Meal", x => new { x.order_id, x.meal_id });
+                    table.ForeignKey(
+                        name: "FK_Order_Meal_Meal",
+                        column: x => x.meal_id,
+                        principalTable: "Meal",
+                        principalColumn: "meal_id");
+                    table.ForeignKey(
+                        name: "FK_Order_Meal_orders",
                         column: x => x.order_id,
                         principalTable: "orders",
                         principalColumn: "order_id");
@@ -509,6 +538,11 @@ namespace Local.Migrations
                 column: "food_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Order_Meal_meal_id",
+                table: "Order_Meal",
+                column: "meal_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_orders_promotionID",
                 table: "orders",
                 column: "promotionID");
@@ -553,6 +587,9 @@ namespace Local.Migrations
                 name: "Calender_date");
 
             migrationBuilder.DropTable(
+                name: "chat");
+
+            migrationBuilder.DropTable(
                 name: "checkout");
 
             migrationBuilder.DropTable(
@@ -563,9 +600,6 @@ namespace Local.Migrations
 
             migrationBuilder.DropTable(
                 name: "Food_portions");
-
-            migrationBuilder.DropTable(
-                name: "FoodOrders");
 
             migrationBuilder.DropTable(
                 name: "FoodUser");
@@ -586,6 +620,9 @@ namespace Local.Migrations
                 name: "Order_Foods");
 
             migrationBuilder.DropTable(
+                name: "Order_Meal");
+
+            migrationBuilder.DropTable(
                 name: "Side_dish");
 
             migrationBuilder.DropTable(
@@ -595,10 +632,10 @@ namespace Local.Migrations
                 name: "Role");
 
             migrationBuilder.DropTable(
-                name: "Meal");
+                name: "Food");
 
             migrationBuilder.DropTable(
-                name: "Food");
+                name: "Meal");
 
             migrationBuilder.DropTable(
                 name: "orders");
