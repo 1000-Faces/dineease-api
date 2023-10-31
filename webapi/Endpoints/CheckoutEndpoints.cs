@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using Stripe.Checkout;
+
 namespace webapi.Endpoints;
 
 public static class CheckoutEndpoints
@@ -17,13 +19,65 @@ public static class CheckoutEndpoints
         .WithName("GetAllCheckouts")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<Checkout>, NotFound>> (Guid orderid, MainDatabaseContext db) =>
+        group.MapGet("/checkoutOrder/{id}", async Task<Results<Ok<string>, BadRequest<string>>> (Guid orderid, MainDatabaseContext db) =>
         {
-            return await db.Checkout.AsNoTracking()
-                .FirstOrDefaultAsync(model => model.OrderId == orderid)
-                is Checkout model
-                    ? TypedResults.Ok(model)
-                    : TypedResults.NotFound();
+
+            var order = await db.Orders.AsNoTracking()
+                .FirstOrDefaultAsync(model => model.OrderId == orderid);
+
+            if (order != null && order.OrderStatus.Trim() == "pai")
+            {
+                return TypedResults.BadRequest("The Order has been paid");
+            }
+            // 4d4bc2a8-fabe-417e-9654-025c5b4961b1
+            var affected = await db.Orders
+                    .Where(model => model.OrderId == orderid)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(m => m.OrderStatus, "paid")
+                    );
+
+            await db.SaveChangesAsync();
+
+            // Stripe payments start
+            var price = 0;
+            if (order != null)
+            {
+                price = (int)order.Total * 100;
+            }
+
+            var domain = "https://localhost:7251/";
+
+            var options = new SessionCreateOptions
+            {
+                SuccessUrl = domain + $"confirmcheckout",
+                CancelUrl = domain + $"cancelcheckout",
+                LineItems = new List<SessionLineItemOptions>(),
+                Mode = "payment",
+            };
+
+
+            var sessionListItem = new SessionLineItemOptions
+            {
+                PriceData = new SessionLineItemPriceDataOptions()
+                {
+                    UnitAmount = price,
+                    Currency = "lkr",
+                    ProductData = new SessionLineItemPriceDataProductDataOptions()
+                    {
+                        Name = "Order" + orderid
+                    }
+                },
+                Quantity = 1
+            };
+            options.LineItems.Add(sessionListItem);
+
+            var service = new SessionService();
+            Session session = service.Create(options);
+
+            //// Perform the redirect by setting the "Location" header
+            var redirectUrl = session.Url;
+            return TypedResults.Ok(redirectUrl);
+
         })
         .WithName("GetCheckoutById")
         .WithOpenApi();
