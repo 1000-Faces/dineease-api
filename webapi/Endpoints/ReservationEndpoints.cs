@@ -134,7 +134,7 @@ public static class ReservationEndpoints
             {
                 // Check for reservation overlap
                 var overlappingReservation = await db.Reservation
-                    .Where(r => r.ReservationDatetime.HasValue && reservation.ReservationDatetime.HasValue && 
+                    .Where(r => r.ReservationDatetime.HasValue && reservation.ReservationDatetime.HasValue &&
                                 r.ReservationDatetime.Value.Date == reservation.ReservationDatetime.Value.Date &&
                                 r.TableNo == reservation.TableNo &&
                                 ((r.ReservationDatetime <= reservation.ReservationDatetime && r.Departure >= reservation.ReservationDatetime) ||
@@ -173,8 +173,8 @@ public static class ReservationEndpoints
                     reservation.Departure = reservation.ReservationDatetime.Value.AddHours(2);
                 }
 
-                //db.Reservation.Add(reservation);
-                //await db.SaveChangesAsync();
+                db.Reservation.Add(reservation);
+                await db.SaveChangesAsync();
                 //return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
 
                 // Stripe payments start
@@ -211,13 +211,18 @@ public static class ReservationEndpoints
                 //// Perform the redirect by setting the "Location" header
                 var redirectUrl = session.Url;
                 return TypedResults.Ok(redirectUrl);
-                return Results.Redirect(redirectUrl);
+
+                if (redirectUrl == null)
+                {
+                    return Results.Redirect(redirectUrl);
+                }
+                
                 // Set the redirect URL in the response headers
                 // Response.Headers.Add("Location", session.Url);
                 // to do : redirect to the session.Url from within the endpoint
 
                 
-                return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
+                // return TypedResults.Created($"/api/Reservation/{reservation.ReservationId}", reservation);
 
             }
             catch (Exception ex)

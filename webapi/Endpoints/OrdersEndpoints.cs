@@ -24,8 +24,9 @@ public static class OrdersEndpoints
 
         group.MapGet("/pending", async (MainDatabaseContext db) =>
         {
+            
             var pendingorder = await db.Orders
-                .Where(r => r.OrderStatus == "pending")
+                .Where(r => r.OrderStatus.Trim() == "pending")
                 .ToListAsync();
 
             return pendingorder;
@@ -149,7 +150,7 @@ public static class OrdersEndpoints
             {
                 orders.Total = 0;
             }
-            if (orders.OrderStatus != "pending")
+            if (orders.OrderStatus.Trim() != "pending")
             {
                 orders.OrderStatus = "pending";
             }
@@ -183,13 +184,39 @@ public static class OrdersEndpoints
             }
 
             // Check if the order status is "pending"
-            if (order.OrderStatus != "pending")
+            if (order.OrderStatus.Trim() == "accepted")
             {
                 return TypedResults.BadRequest("Order is accepted");
             }
 
-            var sql = $"INSERT INTO Order_Foods (order_id, food_id) VALUES ('{orderId}', '{foodId}')";
-            await db.Database.ExecuteSqlRawAsync(sql);
+            // checking for existing food order
+            var hasFoodId = await db.OrderFoods
+                             .Where(f => f.FoodId == foodId && f.OrderId == orderId)
+                             .Select(f => f.FoodId)
+                             .FirstOrDefaultAsync();
+
+            if (hasFoodId != Guid.Empty)
+            {
+                var food_order_quantity = await db.OrderFoods
+                             .Where(f => f.FoodId == foodId && f.OrderId == orderId)
+                             .Select(f => f.Quantity)
+                             .FirstOrDefaultAsync();
+
+                var newQuantity = food_order_quantity + 1;
+
+                var changeQuantity = await db.OrderFoods
+                            .Where(model => model.OrderId == orderId && model.FoodId == foodId)
+                            .ExecuteUpdateAsync(setters => setters
+                              .SetProperty(m => m.Quantity, newQuantity)
+                            );
+                await db.SaveChangesAsync();
+
+            }
+            else
+            {
+                var sql = $"INSERT INTO Order_Foods (order_id, food_id) VALUES ('{orderId}', '{foodId}')";
+                await db.Database.ExecuteSqlRawAsync(sql);
+            }
 
             //get food price 
             var food_price = await db.Food
@@ -256,7 +283,7 @@ public static class OrdersEndpoints
                 return TypedResults.NotFound();
             }
             // Check if the order status is "pending"
-            if (order.OrderStatus != "pending")
+            if (order.OrderStatus.Trim() != "pending")
             {
                 return TypedResults.BadRequest();
             }
