@@ -31,6 +31,8 @@ StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey"
 
 app.UseAuthorization();
 
+app.UseSession();
+
 app.MapControllers();
 
 // -------------------- Endpoints --------------------
