@@ -2,6 +2,10 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
+using Microsoft.AspNetCore.Http;
+using webapi.Services;
+
+
 namespace webapi.Endpoints;
 
 public static class MealEndpoints
@@ -46,8 +50,20 @@ public static class MealEndpoints
         .WithOpenApi();
 
         //List<string> mealNames, 
-        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? userID, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? userID, MainDatabaseContext db, IHttpContextAccessor httpContextAccessor) =>
         {
+
+            // Retrieve session token from HttpContext
+            var context = httpContextAccessor.HttpContext;
+            var sessionToken = context?.Session.GetString("_UserToken");
+
+            if (string.IsNullOrEmpty(sessionToken))
+            {
+                // Session token not found, handle the case (e.g., return Unauthorized)
+                return TypedResults.NotFound("Session token not found.");
+            }
+            
+
             var currentReservationId = await db.Reservation
                 .Where(r => r.CustomerId == userID &&
                 r.Status == "arrived" )
