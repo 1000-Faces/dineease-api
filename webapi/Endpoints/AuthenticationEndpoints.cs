@@ -6,6 +6,7 @@ using webapi.DataModels;
 using webapi.Services;
 using Microsoft.OpenApi.Writers;
 
+
 namespace webapi.Endpoints;
 
 public static class AuthenticationEndpoints

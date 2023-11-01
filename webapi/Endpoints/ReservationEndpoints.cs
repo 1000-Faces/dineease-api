@@ -325,6 +325,7 @@ public static class ReservationEndpoints
             }
 
             reservationToUpdate.StaffId = randomUserId;
+            reservationToUpdate.Status = "arrived";
             db.Reservation.Update(reservationToUpdate);
 
             await db.SaveChangesAsync();

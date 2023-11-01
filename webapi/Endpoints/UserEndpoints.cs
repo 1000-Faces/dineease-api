@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
 using Microsoft.AspNetCore.Mvc;
 using webapi.Services;
+using Firebase.Auth;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using webapi.DataModels;
+using Microsoft.AspNetCore.Http;
 
 namespace webapi.Endpoints;
 
@@ -11,7 +16,9 @@ public static class UserEndpoints
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/user").WithTags(nameof(User));
+        FirebaseAuthProvider auth;
+
+        var group = routes.MapGroup("/api/user").WithTags(nameof(webapi.Models.User));
 
         group.MapGet("/", async (MainDatabaseContext db) =>
         {
@@ -20,14 +27,14 @@ public static class UserEndpoints
         .WithName("GetAllUsers")
         .WithOpenApi();
 
-        group.MapGet("/get", async Task<Results<Ok<User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
+        group.MapGet("/get", async Task<Results<Ok<webapi.Models.User>, NotFound, BadRequest<string>>> (Guid? id, string? email, MainDatabaseContext db) =>
         {
             if (id.HasValue)
             {
                 // If "id" parameter is provided and valid, get user by id
                 return await db.User.AsNoTracking()
                     .FirstOrDefaultAsync(model => model.Id == id.Value)
-                    is User model
+                    is webapi.Models.User model
                         ? TypedResults.Ok(model)
                         : TypedResults.NotFound();
             }
@@ -36,7 +43,7 @@ public static class UserEndpoints
                 // If "email" parameter is provided, get user by email
                 return await db.User.AsNoTracking()
                     .FirstOrDefaultAsync(model => model.Email == email)
-                    is User model
+                    is webapi.Models.User model
                         ? TypedResults.Ok(model)
                         : TypedResults.NotFound();
             }
@@ -50,7 +57,7 @@ public static class UserEndpoints
         .WithName("GetUserByEmailOrId")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, User user, MainDatabaseContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, webapi.Models.User user, MainDatabaseContext db) =>
         {
             var affected = await db.User
                 .Where(model => model.Id == id)
@@ -71,7 +78,7 @@ public static class UserEndpoints
         .WithName("UpdateUser")
         .WithOpenApi();
 
-        group.MapPost("/", async Task<Results<Created<Guid>, BadRequest<string>>> (User user, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results<Created<Guid>, BadRequest<string>, Ok<string>>> (webapi.Models.User user, MainDatabaseContext db) =>
         {
             // Check if user already exists
             if (await db.User.AnyAsync(model => model.Email == user.Email))
@@ -83,6 +90,26 @@ public static class UserEndpoints
             if (user.Authentication == null)
             {
                 return TypedResults.BadRequest("User authentication data is required.");
+            }
+
+            // Register IHttpContextAccessor in ConfigureServices
+            var serviceProvider = routes.ServiceProvider;
+            var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+
+            // Firebase Web api tocken
+            auth = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyBELGN_oHdUVGX_38-thPz6Ca6JTnmjwm0"));
+            //create the user
+            await auth.CreateUserWithEmailAndPasswordAsync(user.Email, user.Authentication.Password);
+            //log in the new user
+            var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(user.Email, user.Authentication.Password);
+            string token = fbAuthLink.FirebaseToken;
+            //saving the token in a session variable
+            if (token != null)
+            {
+                var context = httpContextAccessor.HttpContext;
+                context?.Session.SetString("_UserToken", token);
+
+                //return TypedResults.Ok(token);
             }
 
             // create a new guid for the user
@@ -100,6 +127,36 @@ public static class UserEndpoints
             return TypedResults.Created($"/api/User/", user.Id);
         })
         .WithName("CreateUser")
+        .WithOpenApi();
+
+        // Authenticate user by email and password
+        group.MapPost("/androidLogin", async Task<Results<Accepted<Guid>, Ok<string>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
+        {
+            // Register IHttpContextAccessor in ConfigureServices
+            var serviceProvider = routes.ServiceProvider;
+            var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+
+            // Firebase Web api tocken
+            auth = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyBELGN_oHdUVGX_38-thPz6Ca6JTnmjwm0"));
+
+            //log in an existing user
+            var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(data.Email, data.Password);
+            string token = fbAuthLink.FirebaseToken;
+            //save the token to a session variable
+            if (token != null)
+            {
+                var context = httpContextAccessor.HttpContext;
+                context?.Session.SetString("_UserToken", token);
+
+                return TypedResults.Ok(token);
+            }
+            else
+            {
+                return TypedResults.Unauthorized();
+            }
+            
+        })
+        .WithName("AuthenticateAppUser")
         .WithOpenApi();
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, MainDatabaseContext db) =>

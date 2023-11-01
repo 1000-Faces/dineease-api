@@ -100,6 +100,11 @@ public static class OrdersEndpoints
         // updating order status
         group.MapPut("/putStatus", async Task<Results<Ok, NotFound , BadRequest<string>>> (Guid? orderid, string? status, Orders? orders, MainDatabaseContext db) =>
         {
+            var reservationID = await db.Orders
+            .Where(o => o.OrderId == orderid)
+            .Select(o => o.ReservationId)
+            .FirstOrDefaultAsync();
+
             var affected = await db.Orders
                 .Where(model => model.OrderId == orderid)
                 .ExecuteUpdateAsync(setters => setters
@@ -111,6 +116,19 @@ public static class OrdersEndpoints
                   .SetProperty(m => m.OrderStatus, status)
                   //.SetProperty(m => m.OrderStatus, orders.OrderStatus)
                 );
+
+            // Update status of column in the Reservation table for the given reservationid
+            var reservationToUpdate = await db.Reservation
+                .Where(reservation => reservation.ReservationId == reservationID)
+                .FirstOrDefaultAsync();
+
+            if(status == "accepted" && reservationToUpdate != null)
+            {
+                reservationToUpdate.Status = "prep";
+                db.Reservation.Update(reservationToUpdate);
+
+                await db.SaveChangesAsync();
+            }
 
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
         })
@@ -150,7 +168,7 @@ public static class OrdersEndpoints
             {
                 orders.Total = 0;
             }
-            if (orders.OrderStatus.Trim() != "pending")
+            if (orders.OrderStatus != "pending")
             {
                 orders.OrderStatus = "pending";
             }

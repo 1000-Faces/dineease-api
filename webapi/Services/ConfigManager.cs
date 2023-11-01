@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Stripe;
 using webapi.Models;
 
 namespace webapi.Services
@@ -35,6 +36,8 @@ namespace webapi.Services
 
             // adding the session service
             builder.Services.AddDistributedMemoryCache();
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddSession(options =>
             {
