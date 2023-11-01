@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
 using webapi.DataModels;
 using webapi.Services;
+using Firebase.Auth;
 using Microsoft.OpenApi.Writers;
+
 
 namespace webapi.Endpoints;
 
@@ -12,6 +14,7 @@ public static class AuthenticationEndpoints
 {
     public static void MapAuthenticationEndpoints (this IEndpointRouteBuilder routes)
     {
+        FirebaseAuthProvider auth;
         var group = routes.MapGroup("/api/auth").WithTags(nameof(Authentication));
 
         // Check if account exists by email
@@ -30,7 +33,7 @@ public static class AuthenticationEndpoints
         {
             if (id.HasValue || !string.IsNullOrEmpty(email))
             {
-                User? userModel = null;
+                webapi.Models.User? userModel = null;
                 if (id.HasValue)
                 {
                     userModel = await db.User.AsNoTracking()
@@ -67,7 +70,7 @@ public static class AuthenticationEndpoints
 
 
         // Authenticate user by email and password
-        group.MapPost("/", async Task<Results<Accepted<Guid>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results< Accepted<String>, Ok<Guid>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
         {
             // get user by email with authentication data
             var user = await db.User
@@ -87,8 +90,33 @@ public static class AuthenticationEndpoints
                   .SetProperty(m => m.LastLogged, DateTime.Now)
                 );
 
-            return TypedResults.Accepted($"/api/auth/", user.Id);
-        })
+                // Register IHttpContextAccessor in ConfigureServices
+                var serviceProvider = routes.ServiceProvider;
+                var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+
+                // Firebase Web api tocken
+                auth = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyBELGN_oHdUVGX_38-thPz6Ca6JTnmjwm0"));
+
+                //log in an existing user
+                var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(data.Email, data.Password);
+                string token = fbAuthLink.FirebaseToken;
+
+                //save the token to a session variable
+                if (token != null)
+                {
+                    var context = httpContextAccessor.HttpContext;
+                    context?.Session.SetString("_UserToken", token);
+
+                    return TypedResults.Ok(user.Id);
+
+                }
+                else
+                {
+                    return TypedResults.Unauthorized();
+                }
+
+        //return TypedResults.Accepted($"/api/auth/", user.Id);
+    })
         .WithName("AuthenticateUser")
         .WithOpenApi();
     }

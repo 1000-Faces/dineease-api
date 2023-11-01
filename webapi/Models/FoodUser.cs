@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace webapi.Models;
 
 [PrimaryKey("FoodId", "CustomerId")]
+[Index("CustomerId", Name = "IX_FoodUser_CustomerID")]
 public partial class FoodUser
 {
     [Key]

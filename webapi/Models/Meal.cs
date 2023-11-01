@@ -12,9 +12,8 @@ public partial class Meal
 {
     [Key]
     [Column("meal_id")]
-    public int MealId { get; set; }
+    public Guid MealId { get; set; }
 
-    [Required]
     [Column("meal_name")]
     [StringLength(255)]
     public string MealName { get; set; }
@@ -30,6 +29,9 @@ public partial class Meal
 
     [InverseProperty("Meal")]
     public virtual ICollection<MealFoods> MealFoods { get; set; } = new List<MealFoods>();
+
+    [InverseProperty("Meal")]
+    public virtual ICollection<OrderMeal> OrderMeal { get; set; } = new List<OrderMeal>();
 
     [ForeignKey("MealId")]
     [InverseProperty("Meal")]

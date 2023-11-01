@@ -1,62 +1,41 @@
-﻿using Microsoft.EntityFrameworkCore;
-using webapi.Models;
-using webapi;
 using webapi.Endpoints;
-using Microsoft.Extensions.Options;
+using webapi.Services;
+using Stripe;
 
-// var _allowSpecificOrigins = "_dineEaseSpecificOriginsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Services --------------------
-// enabling CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(
-               builder =>
-               {
-                   // adding wildcard to allow any origin
-                   builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-               });
+// loading services
+ConfigManager configManager = new(builder);
 
-    //options.AddPolicy(_allowSpecificOrigins,
-    //    builder =>
-    //    {
-    //        // adding wildcard to allow any origin
-    //        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    //    });
-});
+// loading the custom secret file
+// SecretFile secretFile = new("dbconnections");
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// configManager.AddConfiguration(secretFile.Load());
 
-// Configure db context with the connection string
-builder.Services.AddDbContext<MainDatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQLDatabase")));
+// connecting to the database
+configManager.ConfigureDBConnection("MainDatabase");
 
-// -------------------- Services --------------------
 
-var app = builder.Build();
+var app = configManager.GetApp();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-if (builder.Configuration["AllowSwagger"] == "true")
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+configManager.AllowSwaggerUI();
 
 app.UseHttpsRedirection();
 
 // add CORS middleware
-app.UseCors(); // this is the default policy
+app.UseCors(); // this is for the default policy
+
+StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
 
 app.UseAuthorization();
 
+app.UseSession();
+
 app.MapControllers();
 
+// -------------------- Endpoints --------------------
 app.MapUserEndpoints();
 
 app.MapAuthenticationEndpoints();
@@ -64,5 +43,21 @@ app.MapAuthenticationEndpoints();
 app.MapOrdersEndpoints();
 
 app.MapReservationEndpoints();
+
+app.MapFoodEndpoints();
+
+app.MapPromotionEndpoints();
+
+app.MapTableEndpoints();
+
+app.MapChatEndpoints();
+
+app.MapStaffEndpoints();
+
+app.MapMealEndpoints();
+
+app.MapCheckoutEndpoints();
+
+// -------------------- Endpoints --------------------
 
 app.Run();
