@@ -9,9 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 ConfigManager configManager = new(builder);
 
 // loading the custom secret file
-SecretFile secretFile = new("dbconnections");
+// SecretFile secretFile = new("dbconnections");
 
-configManager.AddConfiguration(secretFile.Load());
+// configManager.AddConfiguration(secretFile.Load());
 
 // connecting to the database
 configManager.ConfigureDBConnection("MainDatabase");
