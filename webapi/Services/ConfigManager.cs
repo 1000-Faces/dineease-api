@@ -61,9 +61,9 @@ namespace webapi.Services
 
         public void ConfigureDBConnection(string key)
         {
-            // Configure db context with the connection string
+            // load connecton string from the appsettings file
             builder.Services.AddDbContext<MainDatabaseContext>(options =>
-                options.UseSqlServer(builder.Configuration[key])); // "ConnectionStrings:MainDatabase"
+                options.UseSqlServer(builder.Configuration.GetConnectionString(key))); // "ConnectionStrings:MainDatabase"
         }
 
         public WebApplication GetApp()
