@@ -45,12 +45,92 @@ public static class MealEndpoints
         .WithName("UpdateMeal")
         .WithOpenApi();
 
-        group.MapPost("/", async (Meal meal, MainDatabaseContext db) =>
+        //List<string> mealNames, 
+        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? userID, MainDatabaseContext db) =>
         {
+            var currentReservationId = await db.Reservation
+                .Where(r => r.CustomerId == userID &&
+                r.Status == "arrived" )
+                .Select(r => r.ReservationId)
+                .FirstOrDefaultAsync();
+
+            if(currentReservationId == Guid.Empty)
+            {
+                return TypedResults.NotFound("Reservation not found");
+            }
+
+
+            var currentOrder = await db.Orders
+                    .Where(o => o.ReservationId == currentReservationId && o.OrderStatus.Trim() == "pending")
+                    .Select (o => o.OrderId)
+                    .FirstOrDefaultAsync();
+
+            if(currentOrder == Guid.Empty)
+            {
+                return TypedResults.BadRequest("Cannot change order now");
+            }
+
+            //adding new meal
+            var meal = new Meal();
             meal.MealId = Guid.NewGuid();
+            meal.Custom = true;
+            meal.MealName = "custom meal";
+            
+
+            //Adding meal to the order
+            var orderMeal = new OrderMeal();
+            orderMeal.OrderId = currentOrder;
+            orderMeal.MealId = meal.MealId;
+            orderMeal.Quantity = 1;
+
             db.Meal.Add(meal);
+            db.OrderMeal.Add(orderMeal);
+            db.SaveChanges();
+
+            var foodIdCounts = new Dictionary<Guid, int>();
+
+            foreach (var foodIdString in food_ids)
+            {
+                if (Guid.TryParse(foodIdString, out Guid foodId))
+                {
+                    // If foodId is already in the dictionary, increment the count
+                    if (foodIdCounts.ContainsKey(foodId))
+                    {
+                        foodIdCounts[foodId]++;
+                        var existingMealFood = db.MealFoods
+                                    .FirstOrDefault(mf => mf.MealId == meal.MealId && mf.FoodId == foodId);
+
+                        if (existingMealFood != null)
+                        {
+                            existingMealFood.Quantity = foodIdCounts[foodId];
+                            db.MealFoods.Update(existingMealFood);
+                        }
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        // If foodId is not in the dictionary, add it with count 1
+                        foodIdCounts[foodId] = 1;
+                        var mealFood = new MealFoods
+                        {
+                            MealId = meal.MealId,
+                            FoodId = foodId,
+                            Quantity = foodIdCounts[foodId] // Set the appropriate quantity here
+                        };
+                        db.MealFoods.Add(mealFood);
+                        db.SaveChanges();
+                    }     
+                }
+                else
+                {
+                    // Handle invalid Guid format in food_ids if necessary
+                }
+            }
+
+
+
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Meal/{meal.MealId}",meal);
+            return TypedResults.Ok(currentOrder);
         })
         .WithName("CreateMeal")
         .WithOpenApi();
