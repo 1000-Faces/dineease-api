@@ -20,15 +20,20 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="Images\" />
-	</ItemGroup>
+	<Target Name="CopyDataFiles" BeforeTargets="Build">
+		<Message Text="Copying Data files to the output folder..." Importance="high" />
 
-	<PropertyGroup>
-		<OuputPath>$(MSBuildProjectDirectory)\bin\$(Configuration)\$(TargetFramework)\</OuputPath>
-	</PropertyGroup>
+		<!-- Source folder path -->
+		<PropertyGroup>
+			<DataFolderPath>$(MSBuildProjectDirectory)\Data</DataFolderPath>
+		</PropertyGroup>
 
-	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-		<Exec Command="call .\deploy.bat &quot;$(MSBuildProjectDirectory)&quot; &quot;$(OutDir)&quot;" LogStandardErrorAsError="True" ContinueOnError="False" />
+		<!-- Target folder path (adjust it as needed) -->
+		<PropertyGroup>
+			<TargetDataFolderPath>$(OutputPath)Data</TargetDataFolderPath>
+		</PropertyGroup>
+
+		<!-- Copy Data files -->
+		<Copy SourceFiles="@(Folder)" DestinationFolder="$(TargetDataFolderPath)" />
 	</Target>
 </Project>
