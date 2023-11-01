@@ -70,7 +70,7 @@ public static class AuthenticationEndpoints
 
 
         // Authenticate user by email and password
-        group.MapPost("/", async Task<Results< Accepted<string>, Ok<string>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
+        group.MapPost("/", async Task<Results< Accepted<String>, Ok<Guid>, UnauthorizedHttpResult>> (LoginData data, MainDatabaseContext db) =>
         {
             // get user by email with authentication data
             var user = await db.User
@@ -89,32 +89,34 @@ public static class AuthenticationEndpoints
                 .ExecuteUpdateAsync(setters => setters
                   .SetProperty(m => m.LastLogged, DateTime.Now)
                 );
-            // Register IHttpContextAccessor in ConfigureServices
-            var serviceProvider = routes.ServiceProvider;
-            var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
 
-            // Firebase Web api tocken
-            auth = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyBELGN_oHdUVGX_38-thPz6Ca6JTnmjwm0"));
+                // Register IHttpContextAccessor in ConfigureServices
+                var serviceProvider = routes.ServiceProvider;
+                var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
 
-            //log in an existing user
-            var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(data.Email, data.Password);
-            string token = fbAuthLink.FirebaseToken;
+                // Firebase Web api tocken
+                auth = new FirebaseAuthProvider(new FirebaseConfig("AIzaSyBELGN_oHdUVGX_38-thPz6Ca6JTnmjwm0"));
 
-            //save the token to a session variable
-            if (token != null)
-            {
-                var context = httpContextAccessor.HttpContext;
-                context?.Session.SetString("_UserToken", token);
+                //log in an existing user
+                var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(data.Email, data.Password);
+                string token = fbAuthLink.FirebaseToken;
 
-                return TypedResults.Ok(token);
-            }
-            else
-            {
-                return TypedResults.Unauthorized();
-            }
+                //save the token to a session variable
+                if (token != null)
+                {
+                    var context = httpContextAccessor.HttpContext;
+                    context?.Session.SetString("_UserToken", token);
 
-            //return TypedResults.Accepted($"/api/auth/", user.Id);
-        })
+                    return TypedResults.Ok(user.Id);
+
+                }
+                else
+                {
+                    return TypedResults.Unauthorized();
+                }
+
+        //return TypedResults.Accepted($"/api/auth/", user.Id);
+    })
         .WithName("AuthenticateUser")
         .WithOpenApi();
     }
