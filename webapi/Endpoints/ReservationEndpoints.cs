@@ -45,23 +45,25 @@ public static class ReservationEndpoints
 
         // provides the reservations overlapping a given time
         // used to fine all occupied tables
-        group.MapGet("/SelectedTime", async Task<Results<Ok<List<Reservation>>, NotFound>> (DateTime reservationDatetime, DateTime departure, MainDatabaseContext db) =>
+        group.MapGet("/SelectedTime", async Task<Results<Ok<List<int?>>, NotFound>> (DateTime reservationDatetime, MainDatabaseContext db) =>
         {
             DateTime today = DateTime.Now.Date; // Get today's date without the time
+            var departure = reservationDatetime.AddHours(2);
+            var tableNumbers = await db.Reservation
+                        .Where(r => r.ReservationDatetime.HasValue && r.ReservationDatetime.Value.Date == reservationDatetime.Date &&
+                        ((r.ReservationDatetime <= reservationDatetime && r.Departure >= reservationDatetime) ||
+                        (r.ReservationDatetime <= departure && r.Departure >= departure)))
+                        .Select(r => r.TableNo) // Select the TableNo property from reservations
+                        .ToListAsync();
 
-            var reservations = await db.Reservation
-            .Where(r => r.ReservationDatetime.HasValue && r.ReservationDatetime.Value.Date == reservationDatetime.Date && 
-            ( (r.ReservationDatetime <= reservationDatetime && r.Departure >= reservationDatetime ) ||
-            (r.ReservationDatetime <= departure && r.Departure >= departure) ) )
-            .ToListAsync();
-
-            if ( reservations.Count > 0)
+            if (tableNumbers.Any()) // Check if there are any table numbers found
             {
-                return TypedResults.Ok(reservations);
+                return TypedResults.Ok(tableNumbers);
             }
 
             return TypedResults.NotFound();
-            
+
+
         })
         .WithName("GetReservationsSelectedTime")
         .WithOpenApi();

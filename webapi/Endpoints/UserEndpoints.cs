@@ -142,6 +142,7 @@ public static class UserEndpoints
             //log in an existing user
             var fbAuthLink = await auth.SignInWithEmailAndPasswordAsync(data.Email, data.Password);
             string token = fbAuthLink.FirebaseToken;
+            
             //save the token to a session variable
             if (token != null)
             {
