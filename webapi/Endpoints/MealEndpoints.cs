@@ -51,18 +51,23 @@ public static class MealEndpoints
         .WithOpenApi();
 
         //List<string> mealNames, 
-        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? userID, MainDatabaseContext db, IHttpContextAccessor httpContextAccessor) =>
+        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? UiD, string email, MainDatabaseContext db, IHttpContextAccessor httpContextAccessor) =>
         {
+            var userID = await db.User
+                .Where(u => u.Email == email )
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
 
             // Retrieve session token from HttpContext
             var context = httpContextAccessor.HttpContext;
             var sessionToken = context?.Session.GetString("_UserToken");
 
-            if (string.IsNullOrEmpty(sessionToken))
-            {
-                // Session token not found, handle the case (e.g., return Unauthorized)
-                return TypedResults.NotFound("Session token not found.");
-            }
+            //if (string.IsNullOrEmpty(sessionToken))
+            //{
+            //    // Session token not found, handle the case (e.g., return Unauthorized)
+            //    return TypedResults.NotFound("Session token not found.");
+            //}
 
             // Verify the ID token using Firebase Admin SDK
             //var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(sessionToken);
