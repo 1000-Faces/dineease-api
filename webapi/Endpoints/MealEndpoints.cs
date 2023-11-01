@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OpenApi;
 using webapi.Models;
 using Microsoft.AspNetCore.Http;
 using webapi.Services;
+using FirebaseAdmin.Auth;
 
 
 namespace webapi.Endpoints;
@@ -62,7 +63,15 @@ public static class MealEndpoints
                 // Session token not found, handle the case (e.g., return Unauthorized)
                 return TypedResults.NotFound("Session token not found.");
             }
-            
+
+            // Verify the ID token using Firebase Admin SDK
+            //var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(sessionToken);
+
+            // Get user's email from the decoded token
+            //var userEmail = decodedToken.Claims["email"].ToString();
+
+            //return TypedResults.NotFound(userEmail);
+
 
             var currentReservationId = await db.Reservation
                 .Where(r => r.CustomerId == userID &&
