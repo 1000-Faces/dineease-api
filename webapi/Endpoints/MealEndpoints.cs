@@ -83,7 +83,7 @@ public static class MealEndpoints
 
             var currentReservationId = await db.Reservation
                 .Where(r => r.CustomerId == userID &&
-                r.Status == "arrived" )
+                r.Status.Trim() == "arrived" )
                 .Select(r => r.ReservationId)
                 .FirstOrDefaultAsync();
 
