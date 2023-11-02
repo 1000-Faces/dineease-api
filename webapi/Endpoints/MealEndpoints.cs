@@ -51,14 +51,17 @@ public static class MealEndpoints
         .WithOpenApi();
 
         //List<string> mealNames, 
-        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<string>>> (List<string> food_ids, Guid? UiD, string email, MainDatabaseContext db, IHttpContextAccessor httpContextAccessor) =>
+        group.MapPost("/", async Task<Results<Ok<Guid>, NotFound<string>, BadRequest<Guid>>> (List<string> food_ids, Guid? UiD, string? email, MainDatabaseContext db, IHttpContextAccessor httpContextAccessor) =>
         {
             var userID = await db.User
                 .Where(u => u.Email == email )
                 .Select(u => u.Id)
                 .FirstOrDefaultAsync();
 
-
+            if (UiD != Guid.Empty)
+            {
+                userID = (Guid)UiD;
+            }
             // Retrieve session token from HttpContext
             var context = httpContextAccessor.HttpContext;
             var sessionToken = context?.Session.GetString("_UserToken");
@@ -86,18 +89,18 @@ public static class MealEndpoints
 
             if(currentReservationId == Guid.Empty)
             {
-                return TypedResults.NotFound("Reservation not found");
+                return TypedResults.BadRequest(userID);
             }
-
 
             var currentOrder = await db.Orders
                     .Where(o => o.ReservationId == currentReservationId && o.OrderStatus.Trim() == "pending")
                     .Select (o => o.OrderId)
                     .FirstOrDefaultAsync();
+            
 
-            if(currentOrder == Guid.Empty)
+            if (currentOrder == Guid.Empty)
             {
-                return TypedResults.BadRequest("Cannot change order now");
+                return TypedResults.BadRequest(userID);
             }
 
             //adding new meal
